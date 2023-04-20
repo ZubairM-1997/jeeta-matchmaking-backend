@@ -20,12 +20,32 @@ class App {
 	}
 
 	private async initialiseDatabaseConnection() {
-
+		return new Promise<void>((resolve, reject) => {
+		  this.dbClient.listTables((err, data) => {
+			if (err) {
+			  console.error('Error connecting to DynamoDB:', err);
+			  reject(err);
+			} else {
+			  console.log('Connected to DynamoDB');
+			  resolve();
+			}
+		  });
+		});
 	}
 
 	public async init(): Promise<void> {
+		try {
+		  // initialise middleware
+		  this.initialiseMiddleWare();
 
-	}
+		  // initialise database connection
+		  await this.initialiseDatabaseConnection();
+
+		} catch (err) {
+		  console.error('Failed to initialise app:', err);
+		  throw err;
+		}
+	  }
 
 	public async listen(port: number): Promise<void> {
 		// initialize the app
