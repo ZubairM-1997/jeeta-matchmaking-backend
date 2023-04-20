@@ -4,7 +4,7 @@ import bodyParser from 'body-parser'
 import { DynamoDB } from 'aws-sdk';
 
 
-class App {
+export default class App {
 	public express: Application;
 	public dbClient : DynamoDB
 
