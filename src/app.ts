@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import bodyParser from 'body-parser'
 import { DynamoDB } from 'aws-sdk';
+import UsersController from "./resources/user/users.controller"
 
 
 export default class App {
@@ -34,7 +35,9 @@ export default class App {
 	}
 
 	private initialiseControllers(){
-		
+		const usersController = new UsersController(this.dbClient);
+		this.express.use(`/api`, usersController.router);
+
 	}
 
 	public async init(): Promise<void> {
