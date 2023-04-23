@@ -30,6 +30,21 @@ export default class UsersController implements Controller {
 			`${this.path}/create`,
 			this.createUser
 		);
+
+		this.router.put(
+			`${this.path}/:userId/profile_info`,
+			this.createProfileInfo
+		)
+
+		this.router.put(
+			`${this.path}/:userId/analytics`,
+			this.analytics
+		)
+
+		this.router.put(
+			`${this.path}/:userId/contact_preferences`,
+			this.createContactPreference
+		)
 	}
 
 	//these functions will call the userService class and handle errors
@@ -73,6 +88,33 @@ export default class UsersController implements Controller {
 		res: Response,
 		next: NextFunction
 	  ): Promise<Response | void> => {
+
+
+	}
+
+	private createProfileInfo = async (
+		req: Request,
+		res: Response,
+		next: NextFunction
+	  ): Promise<Response | void> => {
+
+
+	}
+
+	private analytics = async (
+		req: Request,
+		res: Response,
+		next: NextFunction
+	  ): Promise<Response | void> => {
+
+
+	}
+
+	private createContactPreference = async (
+		req: Request,
+		res: Response,
+		next: NextFunction
+	) : Promise<Response | void> => {
 
 
 	}
