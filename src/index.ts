@@ -1,6 +1,6 @@
 import App from "./app"
-import { dynamodb } from './dynamoDb'
+import { dynamodb, s3Client } from './aws'
 
-const app = new App(dynamodb)
+const app = new App(dynamodb, s3Client)
 
 app.listen(4000)

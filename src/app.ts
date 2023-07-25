@@ -1,17 +1,19 @@
 import express, { Application } from "express";
 import cors from "cors";
 import bodyParser from 'body-parser'
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDB, S3 } from 'aws-sdk';
 import UsersController from "./resources/user/users.controller"
 
 
 export default class App {
 	public express: Application;
 	public dbClient : DynamoDB
+	public s3Client: S3
 
-	constructor(dbClient: DynamoDB) {
+	constructor(dbClient: DynamoDB, s3Client: S3) {
 		this.express = express();
 		this.dbClient = dbClient;
+		this.s3Client = s3Client;
 	}
 
 	private initialiseMiddleWare(): void {
@@ -35,7 +37,7 @@ export default class App {
 	}
 
 	private initialiseControllers(){
-		const usersController = new UsersController(this.dbClient);
+		const usersController = new UsersController(this.dbClient, this.s3Client);
 		this.express.use(`/api`, usersController.router);
 
 	}

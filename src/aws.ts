@@ -10,5 +10,6 @@ AWS.config.update({
 });
 
 export const dynamodb = new AWS.DynamoDB();
+export const s3Client = new AWS.S3();
 
 

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from './users.service';
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDB, S3 } from 'aws-sdk';
 
 
 export default class UsersController implements Controller {
@@ -9,9 +9,9 @@ export default class UsersController implements Controller {
 	public router = Router();
 	private userService;
 
-	constructor(dbClient: DynamoDB) {
+	constructor(dbClient: DynamoDB, s3Client: S3) {
 		this.initialiseRoutes();
-		this.userService = new UserService(dbClient)
+		this.userService = new UserService(dbClient, s3Client)
 
 	}
 
@@ -89,7 +89,7 @@ export default class UsersController implements Controller {
 		next: NextFunction
 	  ): Promise<Response | void> => {
 
-		const { username, email, password } = req.params
+		const { username, email, password } = req.body;
 
 		try {
 			const user = await this.userService.createUser(username, email, password);
@@ -100,7 +100,7 @@ export default class UsersController implements Controller {
 				})
 			} else {
 				res.status(422).json({
-					message: "Cannot create user"
+					message: "User already exists"
 				  });
 			}
 		  } catch(error) {
@@ -115,6 +115,17 @@ export default class UsersController implements Controller {
 		res: Response,
 		next: NextFunction
 	  ): Promise<Response | void> => {
+		const {
+			firstName,
+			lastName,
+			mobile_number,
+			address,
+			country,
+			gender,
+			height,
+			photo
+
+		} = req.body
 
 
 	}
