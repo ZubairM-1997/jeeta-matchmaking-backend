@@ -27,7 +27,7 @@ export default class UsersController implements Controller {
 		);
 
 		this.router.post(
-			`${this.path}/create`,
+			`${this.path}/sign_up`,
 			this.createUser
 		);
 
@@ -88,6 +88,24 @@ export default class UsersController implements Controller {
 		res: Response,
 		next: NextFunction
 	  ): Promise<Response | void> => {
+
+		const { username, email, password } = req.params
+
+		try {
+			const user = await this.userService.createUser(username, email, password);
+
+			if(user){
+				res.status(200).send({
+					user
+				})
+			} else {
+				res.status(422).json({
+					message: "Cannot create user"
+				  });
+			}
+		  } catch(error) {
+			throw error;
+		  }
 
 
 	}
