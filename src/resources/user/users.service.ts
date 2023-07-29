@@ -72,7 +72,7 @@ export default class UserService {
 				const usersWithPhotos = await Promise.all(
 				  scanResult.Items.map(async (userBio) => {
 					const userBioId = userBio.userBioId.S;
-					const photo = await this.getUserBioPhotoFromS3(userBioId);
+					const photo = userBioId ? await this.getUserBioPhotoFromS3(userBioId) : null;
 					return { ...userBio, photo };
 				  })
 				);
@@ -90,7 +90,7 @@ export default class UserService {
 	}
 
 	private async getUserBioPhotoFromS3(userBioId: string): Promise<string | null> {
-		
+
 		// Prepare the parameters for S3 GetObject operation
 		const params = {
 		  Bucket: 'user-bio-pics', // Replace with the name of your S3 bucket
@@ -106,7 +106,7 @@ export default class UserService {
 		  console.error(`Error fetching photo for userBioId: ${userBioId}`, error);
 		  return null;
 		}
-	  }
+	}
 
 	public async createUser(username: string, email: string, password: string) {
 		const existingUser = await this.getSingleUser(email);
@@ -140,50 +140,168 @@ export default class UserService {
 		}
 	  }
 
-	  async saveUserBio(
+	  async saveApplication(
 		userId : string,
+		email: string,
 		firstName: string,
 		lastName: string,
+		birthday: string,
 		mobileNumber: string,
 		country: string,
 		address: string,
 		gender: string,
 		height: string,
 		ethnicity: string,
-		photo: Buffer
+		religion : string,
+		practicing: string,
+		marital_status: string,
+		wantChildren: string,
+		universityDegree: string,
+		profession: string,
+		howDidYouLearnAboutUs: string,
+		photo: Buffer,
 	  ) {
 		// Create a new user bio object
 		const userBio = {
 		  userBioId: { S: uuidv4() },
 		  userId: { S: userId },
+		  email: {S: email},
 		  firstName: { S: firstName },
 		  lastName: { S: lastName },
+		  birthday: { S: birthday },
 		  mobileNumber: { S: mobileNumber },
 		  country: { S: country },
 		  address: { S: address },
 		  gender: { S: gender },
 		  height: { N: height },
 		  ethnicity: { S: ethnicity },
-		  // You can also store additional metadata like creation timestamp if needed.
+		  religion: { S: religion },
+		  practicing: { S:practicing },
+		  marital_status: { S: marital_status },
+		  wantChildren: { S: wantChildren },
+		  universityDegree: { S: universityDegree },
+		  profession: { S: profession },
+		  howDidYouLearnAboutUs: { S: howDidYouLearnAboutUs },
+		  approved: {S: false}
 		};
 
-		const params = {
-		  TableName: 'user_bios',
-		  Item: userBio,
-		};
+		const params: DynamoDB.PutItemInput = {
+			TableName: 'user_bios',
+			Item: DynamoDB.Converter.marshall(userBio), // Convert the TypeScript object to AttributeMap
+		  };
 
+		  try {
+			// Save the user bio to DynamoDB
+			await this.dbClient.putItem(params).promise();
+			console.log('User bio created successfully.');
+
+			await this.uploadPhotoToS3(userBio.userBioId.S, photo);
+		  } catch (error) {
+			console.error('Error saving user bio:', error);
+			throw error;
+		  }
+	  }
+
+	  async approve(userId: string, approved: boolean): Promise<void> {
 		try {
-		  // Save the user bio to DynamoDB
-		  await this.dbClient.putItem(params).promise();
-		  console.log('User bio created successfully.');
+		  // Fetch the user's profile info from the database
+		  const params: DynamoDB.DocumentClient.GetItemInput = {
+			TableName: 'user_bios',
+			Key: {
+			  userId: { S: userId }
+			},
+		  };
 
-		  await this.uploadPhotoToS3(userBio.userBioId.S, photo);
+		  const result = await this.dbClient.getItem(params).promise();
+		  const userProfileInfo = result.Item as DynamoDB.DocumentClient.AttributeMap | null;
 
-		  return userBio
+		  if (!userProfileInfo) {
+			throw new Error('User profile info not found');
+		  }
+
+		  // Update the approved field in the user bio
+		  userProfileInfo.approved = approved;
+
+		  // Save the updated user profile info back to the database
+		const updateParams: DynamoDB.DocumentClient.PutItemInput = {
+			TableName: 'user_bios',
+			Item: userProfileInfo,
+		};
+
+		  await this.dbClient.putItem(updateParams).promise();
+		  console.log('User profile info updated successfully.');
 		} catch (error) {
-		  console.error('Error saving user bio:', error);
+		  console.error('Error approving application:', error);
 		  throw error;
 		}
+	  }
+
+	  async amend(
+		userId: string,
+		firstName: string,
+		lastName: string,
+		email: string,
+		mobileNumber: string,
+		country: string,
+		address: string,
+		gender: string,
+		height: string,
+		ethnicity: string,
+		religion: string,
+		practicing: string,
+		marital_status: string,
+		wantChildren: string,
+		universityDegree: string,
+		profession: string,
+		howDidYouLearnAboutUs: string,
+		birthday: string,
+		photo: Buffer
+	  ): Promise<void> {
+
+		try {
+			const params: DynamoDB.DocumentClient.GetItemInput = {
+			  TableName: 'user_bios',
+			  Key: {
+				userId: { S: userId }
+			  },
+			};
+
+			const result = await this.dbClient.getItem(params).promise();
+			const userProfileInfo = result.Item as DynamoDB.DocumentClient.AttributeMap
+
+			userProfileInfo.userId = userId
+			userProfileInfo.firstName = firstName
+			userProfileInfo.email = email
+			userProfileInfo.lastName = lastName
+			userProfileInfo.mobileNumber = mobileNumber
+			userProfileInfo.country = country
+			userProfileInfo.address = address
+			userProfileInfo.gender = gender
+			userProfileInfo.height = height
+			userProfileInfo.ethnicity = ethnicity
+			userProfileInfo.religion = religion
+			userProfileInfo.practicing = practicing
+			userProfileInfo.marital_status = marital_status
+			userProfileInfo.wantChildren = wantChildren
+			userProfileInfo.universityDegree = universityDegree
+			userProfileInfo.profession = profession
+			userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs
+			userProfileInfo.birthday = birthday
+			userProfileInfo.photo = photo
+
+
+		  const updateParams: DynamoDB.DocumentClient.PutItemInput = {
+			  TableName: 'user_bios',
+			  Item: userProfileInfo,
+		  };
+
+			await this.dbClient.putItem(updateParams).promise();
+			console.log('User profile info updated successfully.');
+		  } catch (error) {
+			console.error('Error approving application:', error);
+			throw error;
+		  }
+
 	  }
 
 	  private async uploadPhotoToS3(userBioId: string, photo: Buffer) {

@@ -2,12 +2,13 @@ import { Router, Request, Response, NextFunction } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from './users.service';
 import { DynamoDB, S3 } from 'aws-sdk';
+import { authenticateToken } from '../../middleware/middleware';
 
 
 export default class UsersController implements Controller {
 	public path = "/user";
 	public router = Router();
-	private userService;
+	userService;
 
 	constructor(dbClient: DynamoDB, s3Client: S3) {
 		this.initialiseRoutes();
@@ -15,15 +16,33 @@ export default class UsersController implements Controller {
 
 	}
 
-	private initialiseRoutes(): void {
+	initialiseRoutes(): void {
+		//protected route
 		this.router.get(
 		  `${this.path}/:userId`,
+		  authenticateToken,
 		  this.getUser
 		);
 
+		// protected route
 		this.router.get(
 			`${this.path}/allUsers`,
+			authenticateToken,
 			this.getAllUsers
+		);
+
+		// protected route
+		this.router.get(
+			`${this.path}/search`,
+			authenticateToken,
+
+		)
+
+		// protected route
+		this.router.get(
+			`${this.path}/:userId/approveApplication`,
+			authenticateToken,
+			this.approveApplication
 		);
 
 		this.router.post(
@@ -31,25 +50,20 @@ export default class UsersController implements Controller {
 			this.createUser
 		);
 
-		this.router.put(
-			`${this.path}/:userId/profile_info`,
-			this.createProfileInfo
+		this.router.post(
+			`${this.path}/:userId/createApplication`,
+			this.createApplication
 		)
 
 		this.router.put(
-			`${this.path}/:userId/analytics`,
-			this.analytics
-		)
-
-		this.router.put(
-			`${this.path}/:userId/contact_preferences`,
-			this.createContactPreference
+			`${this.path}/:userId/amendApplication`,
+			this.amendApplication
 		)
 	}
 
 	//these functions will call the userService class and handle errors
 
-	private getUser = async (
+	getUser = async (
 		req: Request,
 		res: Response,
 		next: NextFunction
@@ -74,7 +88,7 @@ export default class UsersController implements Controller {
 	  }
 	}
 
-	private getAllUsers = async (
+	getAllUsers = async (
 		req: Request,
 		res: Response,
 		next: NextFunction
@@ -83,7 +97,7 @@ export default class UsersController implements Controller {
 
 	}
 
-	private createUser = async (
+	createUser = async (
 		req: Request,
 		res: Response,
 		next: NextFunction
@@ -110,42 +124,149 @@ export default class UsersController implements Controller {
 
 	}
 
-	private createProfileInfo = async (
+	createApplication = async (
 		req: Request,
 		res: Response,
 		next: NextFunction
 	  ): Promise<Response | void> => {
 		const {
+			userId ,
 			firstName,
+			email,
 			lastName,
-			mobile_number,
-			address,
+			mobileNumber,
 			country,
+			address,
 			gender,
 			height,
-			photo
-
+			ethnicity,
+			religion ,
+			practicing,
+			marital_status,
+			wantChildren,
+			universityDegree,
+			profession,
+			howDidYouLearnAboutUs,
+			birthday,
+			photo,
 		} = req.body
 
+		try {
+			const userProfileInfo = await this.userService.saveApplication(
+				userId,
+				firstName,
+				email,
+				lastName,
+				mobileNumber,
+				address,
+				country,
+				birthday,
+				gender,
+				height,
+				ethnicity,
+				religion,
+				practicing,
+				marital_status,
+				wantChildren,
+				universityDegree,
+				profession,
+				howDidYouLearnAboutUs,
+				photo,
+			);
 
+			return res.status(201).json({ userProfileInfo });
+		} catch (error) {
+			console.error('Error creating profile information:', error);
+			return res.status(500).json({ message: 'Failed to create profile information' });
+		}
 	}
 
-	private analytics = async (
+	approveApplication = async (
 		req: Request,
-		res: Response,
-		next: NextFunction
-	  ): Promise<Response | void> => {
+		res: Response
+	): Promise<Response> => {
+		const { userId } = req.params;
+		const { approved } = req.body;
 
+		try {
+			// Call the UserService method to approve the application
+			await this.userService.approve(userId, approved);
 
-	}
+			return res.status(200).json({ message: 'User application status updated successfully' });
+		} catch (error) {
+			console.error('Error approving application:', error);
+			return res.status(500).json({ message: 'Failed to approve application' });
+		}
+	};
 
-	private createContactPreference = async (
+	amendApplication = async (
 		req: Request,
-		res: Response,
-		next: NextFunction
-	) : Promise<Response | void> => {
+		res: Response
+	  ): Promise<Response> => {
+		const { userId } = req.params;
 
+		try {
+		  const userProfileInfo = await this.userService.getSingleUser(userId);
 
-	}
+		  if (!userProfileInfo) {
+			return res.status(404).json({ message: 'User not found' });
+		  }
+		  const {
+			firstName,
+			lastName,
+			mobileNumber,
+			country,
+			email,
+			address,
+			gender,
+			height,
+			ethnicity,
+			religion,
+			practicing,
+			marital_status,
+			wantChildren,
+			universityDegree,
+			profession,
+			howDidYouLearnAboutUs,
+			birthday,
+			photo,
+		  } = req.body;
 
+		  await this.userService.amend(
+			userId,
+			firstName,
+			email,
+			lastName,
+			mobileNumber,
+			country,
+			address,
+			gender,
+			height,
+			ethnicity,
+			religion,
+			practicing,
+			marital_status,
+			wantChildren,
+			universityDegree,
+			profession,
+			howDidYouLearnAboutUs,
+			birthday,
+			photo
+		  );
+
+		  return res.status(200).json({ message: 'Application amended successfully', userProfileInfo });
+		} catch (error) {
+		  console.error('Error amending application:', error);
+		  return res.status(500).json({ message: 'Failed to amend application' });
+		}
+	};
 }
+
+
+
+
+
+
+
+
+
