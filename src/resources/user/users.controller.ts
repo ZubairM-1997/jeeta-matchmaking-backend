@@ -2,7 +2,6 @@ import { Router, Request, Response, NextFunction } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from './users.service';
 import { DynamoDB, S3 } from 'aws-sdk';
-import { authenticateToken } from '../../middleware/middleware';
 
 
 export default class UsersController implements Controller {
@@ -17,34 +16,6 @@ export default class UsersController implements Controller {
 	}
 
 	initialiseRoutes(): void {
-		//protected route
-		this.router.get(
-		  `${this.path}/:userId`,
-		  authenticateToken,
-		  this.getUser
-		);
-
-		// protected route
-		this.router.get(
-			`${this.path}/allUsers`,
-			authenticateToken,
-			this.getAllUsers
-		);
-
-		// protected route
-		this.router.get(
-			`${this.path}/search`,
-			authenticateToken,
-
-		)
-
-		// protected route
-		this.router.get(
-			`${this.path}/:userId/approveApplication`,
-			authenticateToken,
-			this.approveApplication
-		);
-
 		this.router.post(
 			`${this.path}/sign_up`,
 			this.createUser
@@ -61,41 +32,8 @@ export default class UsersController implements Controller {
 		)
 	}
 
-	//these functions will call the userService class and handle errors
-
-	getUser = async (
-		req: Request,
-		res: Response,
-		next: NextFunction
-	  ): Promise<Response | void> => {
-
-      const { userId } = req.params as { userId: string };
-
-	  try {
-		const user = await this.userService.getSingleUser(userId);
-
-		if(user){
-			res.status(200).send({
-				user
-			})
-		} else {
-			res.status(404).json({
-				message: "User not found"
-			  });
-		}
-	  } catch(error) {
-		throw error;
-	  }
-	}
-
-	getAllUsers = async (
-		req: Request,
-		res: Response,
-		next: NextFunction
-	  ): Promise<Response | void> => {
 
 
-	}
 
 	createUser = async (
 		req: Request,
@@ -120,8 +58,6 @@ export default class UsersController implements Controller {
 		  } catch(error) {
 			throw error;
 		  }
-
-
 	}
 
 	createApplication = async (
@@ -137,6 +73,7 @@ export default class UsersController implements Controller {
 			mobileNumber,
 			country,
 			address,
+			city,
 			gender,
 			height,
 			ethnicity,
@@ -144,10 +81,13 @@ export default class UsersController implements Controller {
 			practicing,
 			marital_status,
 			wantChildren,
+			hasChildren,
 			universityDegree,
 			profession,
 			howDidYouLearnAboutUs,
 			birthday,
+			annualIncome,
+			netWorth,
 			photo,
 		} = req.body
 
@@ -159,6 +99,7 @@ export default class UsersController implements Controller {
 				lastName,
 				mobileNumber,
 				address,
+				city,
 				country,
 				birthday,
 				gender,
@@ -168,10 +109,13 @@ export default class UsersController implements Controller {
 				practicing,
 				marital_status,
 				wantChildren,
+				hasChildren,
 				universityDegree,
 				profession,
 				howDidYouLearnAboutUs,
 				photo,
+				annualIncome,
+				netWorth,
 			);
 
 			return res.status(201).json({ userProfileInfo });
@@ -181,23 +125,6 @@ export default class UsersController implements Controller {
 		}
 	}
 
-	approveApplication = async (
-		req: Request,
-		res: Response
-	): Promise<Response> => {
-		const { userId } = req.params;
-		const { approved } = req.body;
-
-		try {
-			// Call the UserService method to approve the application
-			await this.userService.approve(userId, approved);
-
-			return res.status(200).json({ message: 'User application status updated successfully' });
-		} catch (error) {
-			console.error('Error approving application:', error);
-			return res.status(500).json({ message: 'Failed to approve application' });
-		}
-	};
 
 	amendApplication = async (
 		req: Request,

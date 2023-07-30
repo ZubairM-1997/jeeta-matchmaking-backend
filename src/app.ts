@@ -38,6 +38,7 @@ export default class App {
 
 	private initialiseControllers(){
 		const usersController = new UsersController(this.dbClient, this.s3Client);
+		const adminController = 
 		this.express.use(`/api`, usersController.router);
 
 	}
