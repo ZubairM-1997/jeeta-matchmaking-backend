@@ -18,12 +18,12 @@ export default class AdminController implements Controller {
     //protected route
     this.router.get(`${this.path}/:userId`, authenticateToken, this.getUser);
 
-    // protected route
-    this.router.get(
-      `${this.path}/allUsers`,
-      authenticateToken,
-      this.getAllUsers,
-    );
+    // // protected route
+    // this.router.get(
+    //   `${this.path}/allUsers`,
+    //   authenticateToken,
+    //   this.getAllUsers,
+    // );
 
     // protected route
     this.router.get(`${this.path}/search`, authenticateToken, this.search);
@@ -39,11 +39,10 @@ export default class AdminController implements Controller {
   getUser = async (
     req: Request,
     res: Response,
-    next: NextFunction,
   ): Promise<Response | void> => {
     const { userId } = req.params as { userId: string };
 
-    try {
+
       const user = await this.adminService.getSingleUser(userId);
 
       if (user) {
@@ -55,21 +54,17 @@ export default class AdminController implements Controller {
           message: "User not found",
         });
       }
-    } catch (error) {
-      throw error;
-    }
   };
 
-  getAllUsers = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<Response | void> => {};
+//   getAllUsers = async (
+//     req: Request,
+//     res: Response,
+//     next: NextFunction,
+//   ): Promise<Response | void> => {};
 
   search = async (
     req: Request,
     res: Response,
-    next: NextFunction,
   ): Promise<Response | void> => {
     const {
       gender,
