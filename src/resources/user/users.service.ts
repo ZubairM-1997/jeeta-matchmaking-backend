@@ -1,4 +1,5 @@
 const AWS = require("aws-sdk");
+import { PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
 
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -85,7 +86,6 @@ export default class UserService {
 
   async saveApplication(
     userId: string,
-    email: string,
     firstName: string,
     lastName: string,
     birthday: string,
@@ -108,18 +108,24 @@ export default class UserService {
     annualIncome?: number,
     netWorth?: number,
   ) {
+    const userBioId = uuidv4();
+    const fullName = firstName + ' ' + lastName;
+    const fullAddress = address + "," + city + "," + country
 
     const annualIncomeStr = annualIncome !== undefined ? annualIncome.toString() : null;
     const netWorthStr = netWorth !== undefined ? netWorth.toString() : null;
+    const dobParts = birthday.split("/");
+    if (dobParts.length !== 3) {
+      // Handle invalid birthday format here
+      // For example, throw an error or return an appropriate response
+      throw new Error("Invalid birthday format");
+    }
 
-
-    const dobParts = birthday.split("/"); // Split the date string into parts
-    const userBirthDate = new Date(
-      `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`,
-    ); // Format the date as "YYYY-MM-DD"
+    const userBirthDate = new Date(`${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`);
     const today = new Date();
     let age = today.getFullYear() - userBirthDate.getFullYear();
     const monthDifference = today.getMonth() - userBirthDate.getMonth();
+
     if (
       monthDifference < 0 ||
       (monthDifference === 0 && today.getDate() < userBirthDate.getDate())
@@ -127,50 +133,86 @@ export default class UserService {
       age--; // Reduce age if the user hasn't celebrated the birthday yet this year
     }
 
-    const userBio = {
-      userBioId: AWS.DynamoDB.Converter.input(uuidv4()),
-      userId: AWS.DynamoDB.Converter.input(userId),
-      email: AWS.DynamoDB.Converter.input(email),
-      firstName: AWS.DynamoDB.Converter.input(firstName),
-      lastName: AWS.DynamoDB.Converter.input(lastName),
-      birthday: AWS.DynamoDB.Converter.input(birthday),
-      age: AWS.DynamoDB.Converter.input(age.toString()),
-      mobileNumber: AWS.DynamoDB.Converter.input(mobileNumber),
-      country: AWS.DynamoDB.Converter.input(country),
-      address: AWS.DynamoDB.Converter.input(address),
-      gender: AWS.DynamoDB.Converter.input(gender),
-      height: AWS.DynamoDB.Converter.input(height),
-      ethnicity: AWS.DynamoDB.Converter.input(ethnicity),
-      religion: AWS.DynamoDB.Converter.input(religion),
-      practicing: AWS.DynamoDB.Converter.input(practicing),
-      marital_status: AWS.DynamoDB.Converter.input(marital_status),
-      wantChildren: AWS.DynamoDB.Converter.input(wantChildren),
-      hasChildren: AWS.DynamoDB.Converter.input(hasChildren),
-      annualIncome: AWS.DynamoDB.Converter.input(annualIncomeStr),
-      netWorth: AWS.DynamoDB.Converter.input(netWorthStr),
-      universityDegree: AWS.DynamoDB.Converter.input(universityDegree),
-      profession: AWS.DynamoDB.Converter.input(profession),
-      howDidYouLearnAboutUs: AWS.DynamoDB.Converter.input(howDidYouLearnAboutUs),
-      approved: AWS.DynamoDB.Converter.input("false"),
-      city: AWS.DynamoDB.Converter.input(city),
+    console.log(age)
+
+    const basicInfo : PutItemInputAttributeMap = {
+      userBioId: {S: userBioId},
+      userId: {S: userId},
+      fullName: {S: fullName},
+      birthday: {S: birthday},
+      number: {S: mobileNumber},
+      address: {S: fullAddress},
+      gender: {S: gender},
+      height: {S: height},
+      age: {S: age.toString()}
+    }
+
+    const miscellaneousInfo : PutItemInputAttributeMap = {
+      userBioId: {S: userBioId},
+      userId: {S: userId},
+      religion: {S: religion},
+      practicing: {S: practicing},
+      ethnicity: {S: ethnicity},
+      marital_status: {S: marital_status},
+      wantChildren: {S: wantChildren},
+      hasChildren: {S: hasChildren},
+      howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs},
+    }
+
+    const professionInfo : PutItemInputAttributeMap = {
+      userBioId: {S: userBioId},
+      userId: {S: userId},
+      universityDegree: {S: universityDegree},
+      annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, // Use { NULL: true } for undefined values
+      netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
+      job: {S: profession},
+    }
+
+    const status :  PutItemInputAttributeMap = {
+      userBioId: {S: userBioId},
+      userId: {S: userId},
+      approved: { BOOL: false },
+    }
+
+
+    const basicInfoParams: AWS.DynamoDB.PutItemInput = {
+      TableName: "user_basic_info",
+      Item: basicInfo,
     };
 
-    const params: AWS.DynamoDB.PutItemInput = {
-      TableName: "user_bios",
-      Item: userBio,
-    };
+    const miscellaneousInfoParams : AWS.DynamoDB.PutItemInput = {
+      TableName: "user_misc_info",
+      Item: miscellaneousInfo
+    }
+
+    const professionInfoParams : AWS.DynamoDB.PutItemInput = {
+      TableName: "user_professional_info",
+      Item: professionInfo
+    }
+
+    const statusParams : AWS.DynamoDB.PutItemInput = {
+      TableName: "user_status_info",
+      Item: status
+    }
+
+
     try {
-      // Save the user bio to DynamoDB
-      await this.dbClient.putItem(params).promise();
-      console.log("User bio created successfully.");
 
-      await this.uploadPhotoToS3(userBio.userBioId, photo);
-      return userBio
+      await this.dbClient.putItem(basicInfoParams).promise();
+      await this.dbClient.putItem(miscellaneousInfoParams).promise();
+      await this.dbClient.putItem(professionInfoParams).promise();
+      await this.dbClient.putItem(statusParams).promise();
+
+      console.log("User information has successfully been saved")
+
+
+      await this.uploadPhotoToS3(userBioId, photo);
     } catch (error) {
       console.error("Error saving user bio:", error);
       throw error;
     }
   }
+
 
   async amend(
     userId: string,

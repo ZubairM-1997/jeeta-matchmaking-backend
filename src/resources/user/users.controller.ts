@@ -54,7 +54,6 @@ export default class UsersController implements Controller {
   ): Promise<Response | void> => {
     const {
       firstName,
-      email,
       lastName,
       mobileNumber,
       country,
@@ -83,13 +82,11 @@ export default class UsersController implements Controller {
       const userProfileInfo = await this.userService.saveApplication(
         userId,
         firstName,
-        email,
         lastName,
-        mobileNumber,
-        address,
-        city,
-        country,
         birthday,
+        mobileNumber,
+        country,
+        address,
         gender,
         height,
         ethnicity,
@@ -102,6 +99,7 @@ export default class UsersController implements Controller {
         profession,
         howDidYouLearnAboutUs,
         photo,
+        city,
         annualIncome,
         netWorth,
       );
