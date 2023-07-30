@@ -1,4 +1,5 @@
-import { DynamoDB, S3 } from "aws-sdk";
+const AWS = require("aws-sdk");
+
 import { SearchFilter } from "./admin.controller";
 
 interface AttributeNames {
@@ -6,14 +7,14 @@ interface AttributeNames {
 }
 
 interface AttributeValues {
-  [key: string]: DynamoDB.AttributeValue;
+  [key: string]: AWS.DynamoDB.AttributeValue;
 }
 
 export default class AdminService {
-  public dbClient: DynamoDB;
-  public s3Client: S3;
+  public dbClient: AWS.DynamoDB;
+  public s3Client: AWS.S3;
 
-  constructor(dbClient: DynamoDB, s3Client: S3) {
+  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.dbClient = dbClient;
     this.s3Client = s3Client;
   }
@@ -60,7 +61,7 @@ export default class AdminService {
   async approve(userId: string, approved: boolean): Promise<void> {
     try {
       // Fetch the user's profile info from the database
-      const params: DynamoDB.DocumentClient.GetItemInput = {
+      const params: AWS.DynamoDB.DocumentClient.GetItemInput = {
         TableName: "user_bios",
         Key: {
           userId: { S: userId },
@@ -69,7 +70,7 @@ export default class AdminService {
 
       const result = await this.dbClient.getItem(params).promise();
       const userProfileInfo =
-        result.Item as DynamoDB.DocumentClient.AttributeMap | null;
+        result.Item as AWS.DynamoDB.DocumentClient.AttributeMap | null;
 
       if (!userProfileInfo) {
         throw new Error("User profile info not found");
@@ -79,7 +80,7 @@ export default class AdminService {
       userProfileInfo.approved = approved;
 
       // Save the updated user profile info back to the database
-      const updateParams: DynamoDB.DocumentClient.PutItemInput = {
+      const updateParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
         TableName: "user_bios",
         Item: userProfileInfo,
       };

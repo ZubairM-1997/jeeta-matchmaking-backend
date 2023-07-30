@@ -1,14 +1,14 @@
 import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
-import { DynamoDB, S3 } from "aws-sdk";
+const AWS = require("aws-sdk");
 
 export default class UsersController implements Controller {
   public path = "/user";
   public router = Router();
   userService;
 
-  constructor(dbClient: DynamoDB, s3Client: S3) {
+  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.initialiseRoutes();
     this.userService = new UserService(dbClient, s3Client);
   }

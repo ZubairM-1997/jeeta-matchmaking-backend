@@ -1,12 +1,13 @@
-import { DynamoDB, S3 } from "aws-sdk";
+const AWS = require("aws-sdk");
+
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 
 export default class UserService {
-  public dbClient: DynamoDB;
-  public s3Client: S3;
+  public dbClient: AWS.DynamoDB;
+  public s3Client: AWS.S3;
 
-  constructor(dbClient: DynamoDB, s3Client: S3) {
+  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.dbClient = dbClient;
     this.s3Client = s3Client;
   }
@@ -151,9 +152,9 @@ export default class UserService {
       city: { S: city },
     };
 
-    const params: DynamoDB.PutItemInput = {
+    const params: AWS.DynamoDB.PutItemInput = {
       TableName: "user_bios",
-      Item: DynamoDB.Converter.marshall(userBio), // Convert the TypeScript object to AttributeMap
+      Item: AWS.DynamoDB.Converter.marshall(userBio), // Convert the TypeScript object to AttributeMap
     };
 
     try {
@@ -190,7 +191,7 @@ export default class UserService {
     photo: Buffer,
   ): Promise<void> {
     try {
-      const params: DynamoDB.DocumentClient.GetItemInput = {
+      const params: AWS.DynamoDB.DocumentClient.GetItemInput = {
         TableName: "user_bios",
         Key: {
           userId: { S: userId },
@@ -199,7 +200,7 @@ export default class UserService {
 
       const result = await this.dbClient.getItem(params).promise();
       const userProfileInfo =
-        result.Item as DynamoDB.DocumentClient.AttributeMap;
+        result.Item as AWS.DynamoDB.DocumentClient.AttributeMap;
 
       userProfileInfo.userId = userId;
       userProfileInfo.firstName = firstName;
@@ -221,7 +222,7 @@ export default class UserService {
       userProfileInfo.birthday = birthday;
       userProfileInfo.photo = photo;
 
-      const updateParams: DynamoDB.DocumentClient.PutItemInput = {
+      const updateParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
         TableName: "user_bios",
         Item: userProfileInfo,
       };

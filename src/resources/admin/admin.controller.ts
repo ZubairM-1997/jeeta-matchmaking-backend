@@ -1,4 +1,5 @@
-import { DynamoDB, S3 } from "aws-sdk";
+const AWS = require("aws-sdk");
+
 // import { authenticateToken } from "../../middleware/middleware";
 import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
@@ -22,7 +23,7 @@ export default class AdminController implements Controller {
   public router = Router();
   adminService: AdminService;
 
-  constructor(dbClient: DynamoDB, s3Client: S3) {
+  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.initialiseRoutes();
     this.adminService = new AdminService(dbClient, s3Client);
   }
