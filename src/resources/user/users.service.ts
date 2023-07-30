@@ -14,9 +14,7 @@ export default class UserService {
 
   // these functions will directly call dynamoDb to implement the right queries
 
-  async getSingleUser(userId?: string, email?: string) {
-    if (userId && !email) {
-      // Search by userId
+  async getSingleUserByUserId(userId: string) {
       const params = {
         TableName: "users",
         Key: {
@@ -31,31 +29,31 @@ export default class UserService {
         console.error("Error fetching user by userId:", error);
         throw error;
       }
-    } else if (email && !userId) {
-      // Search by email
-      const params = {
-        TableName: "users",
-        FilterExpression: "email = :emailValue",
-        ExpressionAttributeValues: {
-          ":emailValue": { S: email },
-        },
-      };
 
-      try {
-        const data = await this.dbClient.scan(params).promise();
-        return data.Items; // This will contain an array of users with the specified email if found, otherwise an empty array
-      } catch (error) {
-        console.error("Error scanning users by email:", error);
-        throw error;
-      }
-    } else {
-      throw new Error("Either userId or email must be provided.");
+  }
+
+  async getSingleUserByEmail(email: string){
+    const params = {
+      TableName: "users",
+      FilterExpression: "email = :emailValue",
+      ExpressionAttributeValues: {
+        ":emailValue": { S: email },
+      },
+    };
+    try {
+      const data = await this.dbClient.scan(params).promise();
+      return data.Items; // This will contain an array of users with the specified email if found, otherwise an empty array
+    } catch (error) {
+      console.error("Error scanning users by email:", error);
+      throw error;
     }
+
   }
 
   public async createUser(username: string, email: string, password: string) {
-    const existingUser = await this.getSingleUser(email);
-    if (existingUser) {
+    const existingUser = await this.getSingleUserByEmail(email);
+    console.log(existingUser)
+    if (existingUser?.length !== 0) {
       throw new Error("User with this email already exists.");
     }
 
@@ -101,16 +99,20 @@ export default class UserService {
     practicing: string,
     marital_status: string,
     wantChildren: string,
-    hasChildren: boolean,
+    hasChildren: string,
     universityDegree: string,
     profession: string,
     howDidYouLearnAboutUs: string,
-    annualIncome: number,
-    netWorth: number,
     photo: Buffer,
     city: string,
+    annualIncome?: number,
+    netWorth?: number,
   ) {
-    // Create a new user bio object
+
+    const annualIncomeStr = annualIncome !== undefined ? annualIncome.toString() : null;
+    const netWorthStr = netWorth !== undefined ? netWorth.toString() : null;
+
+
     const dobParts = birthday.split("/"); // Split the date string into parts
     const userBirthDate = new Date(
       `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`,
@@ -124,45 +126,46 @@ export default class UserService {
     ) {
       age--; // Reduce age if the user hasn't celebrated the birthday yet this year
     }
+
     const userBio = {
-      userBioId: { S: uuidv4() },
-      userId: { S: userId },
-      email: { S: email },
-      firstName: { S: firstName },
-      lastName: { S: lastName },
-      birthday: { S: birthday },
-      age: { S: age },
-      mobileNumber: { S: mobileNumber },
-      country: { S: country },
-      address: { S: address },
-      gender: { S: gender },
-      height: { N: height },
-      ethnicity: { S: ethnicity },
-      religion: { S: religion },
-      practicing: { S: practicing },
-      marital_status: { S: marital_status },
-      wantChildren: { S: wantChildren },
-      hasChildren: { S: hasChildren },
-      annualIncome: { S: annualIncome },
-      netWorth: { S: netWorth },
-      universityDegree: { S: universityDegree },
-      profession: { S: profession },
-      howDidYouLearnAboutUs: { S: howDidYouLearnAboutUs },
-      approved: { S: false },
-      city: { S: city },
+      userBioId: AWS.DynamoDB.Converter.input(uuidv4()),
+      userId: AWS.DynamoDB.Converter.input(userId),
+      email: AWS.DynamoDB.Converter.input(email),
+      firstName: AWS.DynamoDB.Converter.input(firstName),
+      lastName: AWS.DynamoDB.Converter.input(lastName),
+      birthday: AWS.DynamoDB.Converter.input(birthday),
+      age: AWS.DynamoDB.Converter.input(age.toString()),
+      mobileNumber: AWS.DynamoDB.Converter.input(mobileNumber),
+      country: AWS.DynamoDB.Converter.input(country),
+      address: AWS.DynamoDB.Converter.input(address),
+      gender: AWS.DynamoDB.Converter.input(gender),
+      height: AWS.DynamoDB.Converter.input(height),
+      ethnicity: AWS.DynamoDB.Converter.input(ethnicity),
+      religion: AWS.DynamoDB.Converter.input(religion),
+      practicing: AWS.DynamoDB.Converter.input(practicing),
+      marital_status: AWS.DynamoDB.Converter.input(marital_status),
+      wantChildren: AWS.DynamoDB.Converter.input(wantChildren),
+      hasChildren: AWS.DynamoDB.Converter.input(hasChildren),
+      annualIncome: AWS.DynamoDB.Converter.input(annualIncomeStr),
+      netWorth: AWS.DynamoDB.Converter.input(netWorthStr),
+      universityDegree: AWS.DynamoDB.Converter.input(universityDegree),
+      profession: AWS.DynamoDB.Converter.input(profession),
+      howDidYouLearnAboutUs: AWS.DynamoDB.Converter.input(howDidYouLearnAboutUs),
+      approved: AWS.DynamoDB.Converter.input("false"),
+      city: AWS.DynamoDB.Converter.input(city),
     };
 
     const params: AWS.DynamoDB.PutItemInput = {
       TableName: "user_bios",
-      Item: AWS.DynamoDB.Converter.marshall(userBio), // Convert the TypeScript object to AttributeMap
+      Item: userBio,
     };
-
     try {
       // Save the user bio to DynamoDB
       await this.dbClient.putItem(params).promise();
       console.log("User bio created successfully.");
 
-      await this.uploadPhotoToS3(userBio.userBioId.S, photo);
+      await this.uploadPhotoToS3(userBio.userBioId, photo);
+      return userBio
     } catch (error) {
       console.error("Error saving user bio:", error);
       throw error;

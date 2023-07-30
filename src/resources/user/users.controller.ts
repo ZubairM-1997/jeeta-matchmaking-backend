@@ -3,6 +3,8 @@ import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
 const AWS = require("aws-sdk");
 
+
+
 export default class UsersController implements Controller {
   public path = "/user";
   public router = Router();
@@ -51,7 +53,6 @@ export default class UsersController implements Controller {
     res: Response,
   ): Promise<Response | void> => {
     const {
-      userId,
       firstName,
       email,
       lastName,
@@ -73,8 +74,10 @@ export default class UsersController implements Controller {
       birthday,
       annualIncome,
       netWorth,
-      photo,
+      photo
     } = req.body;
+
+    const { userId } = req.params;
 
     try {
       const userProfileInfo = await this.userService.saveApplication(
@@ -102,7 +105,6 @@ export default class UsersController implements Controller {
         annualIncome,
         netWorth,
       );
-
       return res.status(201).json({ userProfileInfo });
     } catch (error) {
       console.error("Error creating profile information:", error);
@@ -116,7 +118,7 @@ export default class UsersController implements Controller {
     const { userId } = req.params;
 
     try {
-      const userProfileInfo = await this.userService.getSingleUser(userId);
+      const userProfileInfo = await this.userService.getSingleUserByUserId(userId);
 
       if (!userProfileInfo) {
         return res.status(404).json({ message: "User not found" });
