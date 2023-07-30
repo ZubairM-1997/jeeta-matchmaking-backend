@@ -3,6 +3,7 @@ import cors from "cors";
 import bodyParser from 'body-parser'
 import { DynamoDB, S3 } from 'aws-sdk';
 import UsersController from "./resources/user/users.controller"
+import AdminController from './resources/admin/admin.controller';
 
 
 export default class App {
@@ -38,8 +39,9 @@ export default class App {
 
 	private initialiseControllers(){
 		const usersController = new UsersController(this.dbClient, this.s3Client);
-		const adminController = 
+		const adminController = new AdminController(this.dbClient, this.s3Client);
 		this.express.use(`/api`, usersController.router);
+		this.express.use(`/admin`, adminController.router)
 
 	}
 
@@ -47,6 +49,7 @@ export default class App {
 		try {
 		  // initialise middleware
 		  this.initialiseMiddleWare();
+		  this.initialiseControllers();
 
 		  // initialise database connection
 		  await this.initialiseDatabaseConnection();
