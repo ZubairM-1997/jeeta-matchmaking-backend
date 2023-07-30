@@ -4,18 +4,18 @@ import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import AdminService from "./admin.service";
 
-interface SearchFilter {
-	gender?: string;
-	city?: string;
-	age?: number;
-	religion?: string;
-	ethnicity?: string;
-	height?: number;
-	hasChildren?: boolean;
-	wantChildren?: boolean;
-	profession?: string;
-	education?: string;
-  }
+export interface SearchFilter {
+  gender?: string;
+  city?: string;
+  age?: number;
+  religion?: string;
+  ethnicity?: string;
+  height?: number;
+  hasChildren?: boolean;
+  wantChildren?: boolean;
+  profession?: string;
+  education?: string;
+}
 
 export default class AdminController implements Controller {
   public path = "/user";
@@ -74,45 +74,43 @@ export default class AdminController implements Controller {
   };
 
   search = async (req: Request, res: Response): Promise<Response | void> => {
-	const {
-	  gender,
-	  city,
-	  age,
-	  religion,
-	  ethnicity,
-	  height,
-	  hasChildren,
-	  wantChildren,
-	  profession,
-	  education,
-	} = req.body;
+    const {
+      gender,
+      city,
+      age,
+      religion,
+      ethnicity,
+      height,
+      hasChildren,
+      wantChildren,
+      profession,
+      education,
+    } = req.body;
 
-	// Construct a search filter based on the provided parameters
-	const searchFilter: SearchFilter = {};
+    // Construct a search filter based on the provided parameters
+    const searchFilter: SearchFilter = {};
 
-	if (gender) searchFilter.gender = gender;
-	if (city) searchFilter.city = city;
-	if (age) searchFilter.age = age;
-	if (religion) searchFilter.religion = religion;
-	if (ethnicity) searchFilter.ethnicity = ethnicity;
-	if (height) searchFilter.height = height;
-	if (hasChildren) searchFilter.hasChildren = hasChildren;
-	if (wantChildren) searchFilter.wantChildren = wantChildren;
-	if (profession) searchFilter.profession = profession;
-	if (education) searchFilter.education = education;
+    if (gender) searchFilter.gender = gender;
+    if (city) searchFilter.city = city;
+    if (age) searchFilter.age = age;
+    if (religion) searchFilter.religion = religion;
+    if (ethnicity) searchFilter.ethnicity = ethnicity;
+    if (height) searchFilter.height = height;
+    if (hasChildren) searchFilter.hasChildren = hasChildren;
+    if (wantChildren) searchFilter.wantChildren = wantChildren;
+    if (profession) searchFilter.profession = profession;
+    if (education) searchFilter.education = education;
 
-	try {
-	  // Call the adminService method to search for users based on the filter
-	  const searchResults = await this.adminService.searchUsers(searchFilter);
+    try {
+      // Call the adminService method to search for users based on the filter
+      const searchResults = await this.adminService.searchUsers(searchFilter);
 
-	  return res.status(200).json({ searchResults });
-	} catch (error) {
-	  console.error("Error searching users:", error);
-	  return res.status(500).json({ message: "Failed to perform the search" });
-	}
-  }
-
-
+      return res.status(200).json({ searchResults });
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return res.status(500).json({ message: "Failed to perform the search" });
+    }
+  };
 
   approveApplication = async (
     req: Request,

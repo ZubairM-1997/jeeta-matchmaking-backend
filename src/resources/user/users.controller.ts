@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
 import { DynamoDB, S3 } from "aws-sdk";
@@ -30,31 +30,25 @@ export default class UsersController implements Controller {
   createUser = async (
     req: Request,
     res: Response,
-    next: NextFunction,
   ): Promise<Response | void> => {
     const { username, email, password } = req.body;
 
-    try {
-      const user = await this.userService.createUser(username, email, password);
+    const user = await this.userService.createUser(username, email, password);
 
-      if (user) {
-        res.status(200).send({
-          user,
-        });
-      } else {
-        res.status(422).json({
-          message: "User already exists",
-        });
-      }
-    } catch (error) {
-      throw error;
+    if (user) {
+      res.status(200).send({
+        user,
+      });
+    } else {
+      res.status(422).json({
+        message: "User already exists",
+      });
     }
   };
 
   createApplication = async (
     req: Request,
     res: Response,
-    next: NextFunction,
   ): Promise<Response | void> => {
     const {
       userId,

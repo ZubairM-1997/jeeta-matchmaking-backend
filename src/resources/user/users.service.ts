@@ -13,7 +13,7 @@ export default class UserService {
 
   // these functions will directly call dynamoDb to implement the right queries
 
-  async getSingleUser(userId?: string, email?: string): Promise<any> {
+  async getSingleUser(userId?: string, email?: string) {
     if (userId && !email) {
       // Search by userId
       const params = {
@@ -110,14 +110,19 @@ export default class UserService {
     city: string,
   ) {
     // Create a new user bio object
-	const dobParts = birthday.split('/'); // Split the date string into parts
-	const userBirthDate = new Date(`${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`); // Format the date as "YYYY-MM-DD"
-	const today = new Date();
-	let age = today.getFullYear() - userBirthDate.getFullYear();
-	const monthDifference = today.getMonth() - userBirthDate.getMonth();
-	if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < userBirthDate.getDate())) {
-		age--; // Reduce age if the user hasn't celebrated the birthday yet this year
-	}
+    const dobParts = birthday.split("/"); // Split the date string into parts
+    const userBirthDate = new Date(
+      `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`,
+    ); // Format the date as "YYYY-MM-DD"
+    const today = new Date();
+    let age = today.getFullYear() - userBirthDate.getFullYear();
+    const monthDifference = today.getMonth() - userBirthDate.getMonth();
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < userBirthDate.getDate())
+    ) {
+      age--; // Reduce age if the user hasn't celebrated the birthday yet this year
+    }
     const userBio = {
       userBioId: { S: uuidv4() },
       userId: { S: userId },
@@ -125,7 +130,7 @@ export default class UserService {
       firstName: { S: firstName },
       lastName: { S: lastName },
       birthday: { S: birthday },
-	  age: {S: age},
+      age: { S: age },
       mobileNumber: { S: mobileNumber },
       country: { S: country },
       address: { S: address },

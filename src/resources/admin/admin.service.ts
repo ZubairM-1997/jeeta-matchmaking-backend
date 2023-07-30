@@ -1,4 +1,13 @@
 import { DynamoDB, S3 } from "aws-sdk";
+import { SearchFilter } from "./admin.controller";
+
+interface AttributeNames {
+  [key: string]: string;
+}
+
+interface AttributeValues {
+  [key: string]: DynamoDB.AttributeValue;
+}
 
 export default class AdminService {
   public dbClient: DynamoDB;
@@ -9,7 +18,7 @@ export default class AdminService {
     this.s3Client = s3Client;
   }
 
-  async getSingleUser(userId?: string, email?: string): Promise<any> {
+  async getSingleUser(userId?: string, email?: string) {
     if (userId && !email) {
       // Search by userId
       const params = {
@@ -137,7 +146,7 @@ export default class AdminService {
     }
   }
 
-  async searchUsers(searchFilter: Record<string, any>): Promise<any[]> {
+  async searchUsers(searchFilter: SearchFilter) {
     const params = {
       TableName: "user_bios",
       FilterExpression: this.generateFilterExpression(searchFilter),
@@ -155,10 +164,10 @@ export default class AdminService {
     }
   }
 
-  generateFilterExpression(searchFilter: Record<string, any>): string {
+  generateFilterExpression(searchFilter: SearchFilter): string {
     const conditions = [];
-    const attributeNames: Record<string, string> = {};
-    const attributeValues: Record<string, any> = {};
+    const attributeNames: AttributeNames = {};
+    const attributeValues: AttributeValues = {};
 
     if (searchFilter.gender) {
       conditions.push("#gender = :gender");
@@ -175,10 +184,8 @@ export default class AdminService {
     return conditions.join(" AND ");
   }
 
-  generateExpressionAttributeValues(
-    searchFilter: Record<string, any>,
-  ): Record<string, any> {
-    const attributeValues: Record<string, any> = {};
+  generateExpressionAttributeValues(searchFilter: SearchFilter) {
+    const attributeValues: AttributeValues = {};
 
     if (searchFilter.gender) {
       attributeValues[":gender"] = { S: searchFilter.gender };
