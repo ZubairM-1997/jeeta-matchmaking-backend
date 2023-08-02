@@ -1,9 +1,8 @@
 import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
+import jwt from "jsonwebtoken";
 const AWS = require("aws-sdk");
-
-
 
 export default class UsersController implements Controller {
   public path = "/user";
@@ -17,6 +16,7 @@ export default class UsersController implements Controller {
 
   initialiseRoutes(): void {
     this.router.post(`${this.path}/sign_up`, this.createUser);
+    this.router.post(`${this.path}/sign_in`, this.loginUser);
 
     this.router.post(
       `${this.path}/:userId/createApplication`,
@@ -45,6 +45,34 @@ export default class UsersController implements Controller {
       res.status(422).json({
         message: "User already exists",
       });
+    }
+  };
+
+  loginUser = async (req: Request, res: Response): Promise<Response | void> => {
+    const { email, password } = req.body;
+
+    try {
+      const user = await this.userService.getSingleUserByEmail(email);
+
+      if (!user || user.length === 0) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const secretKey = process.env.JWT_SECRET_KEY as string; // Replace this with your actual environment variable name
+
+
+      if (!secretKey) {
+        return res.status(500).json({ message: "JWT secret key not found" });
+      }
+
+      const userMatch = await this.userService.loginUser(email, password)
+
+      const token = jwt.sign({userMatch}, secretKey, { expiresIn: "1h" });
+
+      return res.status(200).json({ token });
+    } catch (error) {
+      console.error("Error during login:", error);
+      return res.status(500).json({ message: "Failed to log in" });
     }
   };
 

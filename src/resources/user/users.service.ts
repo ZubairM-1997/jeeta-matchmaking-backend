@@ -110,6 +110,33 @@ export default class UserService {
     }
   }
 
+  public async loginUser(email: string, password: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    try {
+      // Get the user with the specified email from DynamoDB
+      const users = await this.getSingleUserByEmail(email);
+
+      if (users && users.length > 0) {
+        const user = users[0];
+        const hashedPassword = user.password.S as string; // Assuming the password attribute is stored as a string
+
+        // Compare the hashed password with the input password using bcrypt
+        const passwordMatch = await bcrypt.compare(password, hashedPassword);
+
+        if (passwordMatch) {
+          // If passwords match, return the user data (without the password attribute)
+          const { password, ...userDataWithoutPassword } = user;
+          return userDataWithoutPassword;
+        }
+      }
+
+      // If the user is not found or passwords don't match, return null
+      return null;
+    } catch (error) {
+      console.error("Error during user login:", error);
+      throw error;
+    }
+  }
+
   async saveApplication(
     userId: string,
     firstName: string,

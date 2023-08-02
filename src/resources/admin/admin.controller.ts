@@ -38,12 +38,24 @@ export default class AdminController implements Controller {
     // protected route
     this.router.post(`${this.path}/search`, this.search);
 
+    this.router.post(`${this.path}/createAdmin`, this.createAdmin)
+    this.router.post(`${this.path}/loginAdmin`, this.loginAdmin)
+
     // protected route
     this.router.get(
       `${this.path}/:userId/approveApplication`,
       this.approveApplication,
     );
   }
+
+  createAdmin = async (req: Request, res: Response): Promise<Response | void> => {
+
+  }
+
+  loginAdmin = async (req: Request, res: Response): Promise<Response | void> => {
+    
+  }
+
 
   getUser = async (req: Request, res: Response): Promise<Response | void> => {
     const { userId } = req.params as { userId: string };
