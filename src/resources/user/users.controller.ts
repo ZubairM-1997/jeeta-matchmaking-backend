@@ -115,6 +115,10 @@ export default class UsersController implements Controller {
   amendApplication = async (req: Request, res: Response): Promise<Response> => {
     const { userId } = req.params;
 
+    if (typeof userId !== 'string') {
+      return res.status(400).json({ message: "Invalid userId" });
+    }
+
     try {
       const userProfileInfo = await this.userService.getSingleUserByUserId(userId);
 
@@ -122,11 +126,8 @@ export default class UsersController implements Controller {
         return res.status(404).json({ message: "User not found" });
       }
       const {
-        firstName,
-        lastName,
+        fullName,
         mobileNumber,
-        country,
-        email,
         address,
         gender,
         height,
@@ -142,13 +143,11 @@ export default class UsersController implements Controller {
         photo,
       } = req.body;
 
+
       await this.userService.amend(
         userId,
-        firstName,
-        email,
-        lastName,
+        fullName,
         mobileNumber,
-        country,
         address,
         gender,
         height,

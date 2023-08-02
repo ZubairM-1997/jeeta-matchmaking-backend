@@ -1,5 +1,5 @@
 const AWS = require("aws-sdk");
-import { PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
+import DynamoDB, { PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
 
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -7,10 +7,12 @@ import { v4 as uuidv4 } from "uuid";
 export default class UserService {
   public dbClient: AWS.DynamoDB;
   public s3Client: AWS.S3;
+  private documentClient: AWS.DynamoDB.DocumentClient;
 
   constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.dbClient = dbClient;
     this.s3Client = s3Client;
+    this.documentClient = new DynamoDB.DocumentClient();
   }
 
   // these functions will directly call dynamoDb to implement the right queries
@@ -50,6 +52,30 @@ export default class UserService {
     }
 
   }
+
+  async getUserProfileInfoByUserId(userId: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    const params: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: "user_bio_info",
+      KeyConditionExpression: "userId = :uid",
+      ExpressionAttributeValues: {
+        ":uid": userId,
+      },
+      Limit: 1, // Since userId is unique, we can limit the result to 1 item
+    };
+
+    try {
+      const result = await this.documentClient.query(params).promise();
+      if (result.Items && result.Items.length > 0) {
+        return result.Items[0] as AWS.DynamoDB.DocumentClient.AttributeMap;
+      } else {
+        return null; // Return null if no matching item found
+      }
+    } catch (error) {
+      console.error("Error fetching user profile info:", error);
+      throw error;
+    }
+  }
+
 
   public async createUser(username: string, email: string, password: string) {
     const existingUser = await this.getSingleUserByEmail(email);
@@ -133,23 +159,16 @@ export default class UserService {
       age--; // Reduce age if the user hasn't celebrated the birthday yet this year
     }
 
-    console.log(age)
-
     const basicInfo : PutItemInputAttributeMap = {
       userBioId: {S: userBioId},
       userId: {S: userId},
       fullName: {S: fullName},
       birthday: {S: birthday},
-      number: {S: mobileNumber},
+      mobileNumber: {S: mobileNumber},
       address: {S: fullAddress},
       gender: {S: gender},
       height: {S: height},
-      age: {S: age.toString()}
-    }
-
-    const miscellaneousInfo : PutItemInputAttributeMap = {
-      userBioId: {S: userBioId},
-      userId: {S: userId},
+      age: {S: age.toString()},
       religion: {S: religion},
       practicing: {S: practicing},
       ethnicity: {S: ethnicity},
@@ -157,54 +176,24 @@ export default class UserService {
       wantChildren: {S: wantChildren},
       hasChildren: {S: hasChildren},
       howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs},
-    }
-
-    const professionInfo : PutItemInputAttributeMap = {
-      userBioId: {S: userBioId},
-      userId: {S: userId},
       universityDegree: {S: universityDegree},
       annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, // Use { NULL: true } for undefined values
       netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
-      job: {S: profession},
-    }
-
-    const status :  PutItemInputAttributeMap = {
-      userBioId: {S: userBioId},
-      userId: {S: userId},
+      profession: {S: profession},
       approved: { BOOL: false },
     }
 
 
-    const basicInfoParams: AWS.DynamoDB.PutItemInput = {
-      TableName: "user_basic_info",
+    const bioInfoParams: AWS.DynamoDB.PutItemInput = {
+      TableName: "user_bio_info",
       Item: basicInfo,
     };
-
-    const miscellaneousInfoParams : AWS.DynamoDB.PutItemInput = {
-      TableName: "user_misc_info",
-      Item: miscellaneousInfo
-    }
-
-    const professionInfoParams : AWS.DynamoDB.PutItemInput = {
-      TableName: "user_professional_info",
-      Item: professionInfo
-    }
-
-    const statusParams : AWS.DynamoDB.PutItemInput = {
-      TableName: "user_status_info",
-      Item: status
-    }
 
 
     try {
 
-      await this.dbClient.putItem(basicInfoParams).promise();
-      await this.dbClient.putItem(miscellaneousInfoParams).promise();
-      await this.dbClient.putItem(professionInfoParams).promise();
-      await this.dbClient.putItem(statusParams).promise();
-
+      await this.dbClient.putItem(bioInfoParams).promise();
       console.log("User information has successfully been saved")
-
 
       await this.uploadPhotoToS3(userBioId, photo);
     } catch (error) {
@@ -216,12 +205,9 @@ export default class UserService {
 
   async amend(
     userId: string,
-    firstName: string,
-    lastName: string,
-    email: string,
+    fullName: string,
     mobileNumber: string,
-    country: string,
-    address: string,
+    fullAddress: string,
     gender: string,
     height: string,
     ethnicity: string,
@@ -236,49 +222,109 @@ export default class UserService {
     photo: Buffer,
   ): Promise<void> {
     try {
-      const params: AWS.DynamoDB.DocumentClient.GetItemInput = {
-        TableName: "user_bios",
-        Key: {
-          userId: { S: userId },
-        },
-      };
+     // Get the existing user profile info by userId
+     const userProfileInfo = await this.getUserProfileInfoByUserId(userId);
 
-      const result = await this.dbClient.getItem(params).promise();
-      const userProfileInfo =
-        result.Item as AWS.DynamoDB.DocumentClient.AttributeMap;
+     if (!userProfileInfo) {
+       throw new Error("User profile not found.");
+     }
 
-      userProfileInfo.userId = userId;
-      userProfileInfo.firstName = firstName;
-      userProfileInfo.email = email;
-      userProfileInfo.lastName = lastName;
-      userProfileInfo.mobileNumber = mobileNumber;
-      userProfileInfo.country = country;
-      userProfileInfo.address = address;
-      userProfileInfo.gender = gender;
-      userProfileInfo.height = height;
-      userProfileInfo.ethnicity = ethnicity;
-      userProfileInfo.religion = religion;
-      userProfileInfo.practicing = practicing;
-      userProfileInfo.marital_status = marital_status;
-      userProfileInfo.wantChildren = wantChildren;
-      userProfileInfo.universityDegree = universityDegree;
-      userProfileInfo.profession = profession;
-      userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs;
-      userProfileInfo.birthday = birthday;
-      userProfileInfo.photo = photo;
+     // Update the user profile attributes
+     userProfileInfo.fullName = fullName;
+     userProfileInfo.mobileNumber = mobileNumber;
+     userProfileInfo.address = fullAddress;
+     userProfileInfo.gender = gender;
+     userProfileInfo.height = height;
+     userProfileInfo.ethnicity = ethnicity;
+     userProfileInfo.religion = religion;
+     userProfileInfo.practicing = practicing;
+     userProfileInfo.marital_status = marital_status;
+     userProfileInfo.wantChildren = wantChildren;
+     userProfileInfo.universityDegree = universityDegree;
+     userProfileInfo.profession = profession; // Updated attribute name
+     userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs;
+     userProfileInfo.birthday = birthday;
 
-      const updateParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
-        TableName: "user_bios",
-        Item: userProfileInfo,
-      };
+     // Update the user profile info in DynamoDB
+     await this.updateUserProfileInfo(userProfileInfo);
 
-      await this.dbClient.putItem(updateParams).promise();
-      console.log("User profile info updated successfully.");
+     // Update the photo in S3 using the correct userBioId
+    //  await this.updatePhotoInS3(userProfileInfo.userBioId.S, photo);
+
+     console.log("User profile info and photo updated successfully.");
+      // console.log("User photo updated in S3 successfully.");
     } catch (error) {
-      console.error("Error approving application:", error);
+      console.error("Error amending application:", error);
       throw error;
     }
   }
+
+  async updateUserProfileInfo(userProfileInfo: AWS.DynamoDB.DocumentClient.AttributeMap): Promise<void> {
+    const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: "user_bio_info",
+      Key: { userId: userProfileInfo.userId, userBioId: userProfileInfo.userBioId  },
+      UpdateExpression: `SET
+        fullName = :fullName,
+        mobileNumber = :mobileNumber,
+        address = :address,
+        gender = :gender,
+        height = :height,
+        ethnicity = :ethnicity,
+        religion = :religion,
+        practicing = :practicing,
+        marital_status = :marital_status,
+        wantChildren = :wantChildren,
+        universityDegree = :universityDegree,
+        profession = :profession,
+        howDidYouLearnAboutUs = :howDidYouLearnAboutUs,
+        birthday = :birthday`,
+      ExpressionAttributeValues: {
+        ":fullName": userProfileInfo.fullName,
+        ":mobileNumber": userProfileInfo.mobileNumber,
+        ":address": userProfileInfo.address,
+        ":gender": userProfileInfo.gender,
+        ":height": userProfileInfo.height,
+        ":ethnicity": userProfileInfo.ethnicity,
+        ":religion": userProfileInfo.religion,
+        ":practicing": userProfileInfo.practicing,
+        ":marital_status": userProfileInfo.marital_status,
+        ":wantChildren": userProfileInfo.wantChildren,
+        ":universityDegree": userProfileInfo.universityDegree,
+        ":profession": userProfileInfo.profession,
+        ":howDidYouLearnAboutUs": userProfileInfo.howDidYouLearnAboutUs,
+        ":birthday": userProfileInfo.birthday,
+      },
+    };
+
+    try {
+      await this.documentClient.update(params).promise();
+      console.log("User profile info updated in DynamoDB successfully.");
+    } catch (error) {
+      console.error("Error updating user profile info:", error);
+      throw error;
+    }
+  }
+
+
+  async updatePhotoInS3(userBioId: string, photo: Buffer): Promise<void> {
+    const photoKey = userBioId; // Change the extension based on the photo type
+
+    const params: AWS.S3.PutObjectRequest = {
+      Bucket: "user-bio-pics", // Replace with the actual name of your S3 bucket
+      Key: photoKey,
+      Body: photo,
+    };
+
+    try {
+      // Upload the new photo to S3
+      await this.s3Client.putObject(params).promise();
+      console.log("New photo uploaded to S3 successfully.");
+    } catch (error) {
+      console.error("Error uploading new photo to S3:", error);
+      throw error;
+    }
+  }
+
 
   private async uploadPhotoToS3(userBioId: string, photo: Buffer) {
     // Prepare the parameters for S3 PutObject operation
