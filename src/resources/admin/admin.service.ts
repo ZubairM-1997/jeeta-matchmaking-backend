@@ -238,7 +238,7 @@ export default class AdminService {
 
   async searchUsers(searchFilter: SearchFilter) {
     const params = {
-      TableName: "user_bios",
+      TableName: "user_bio_info",
       FilterExpression: this.generateFilterExpression(searchFilter),
       ExpressionAttributeValues: this.generateExpressionAttributeValues(
         searchFilter
