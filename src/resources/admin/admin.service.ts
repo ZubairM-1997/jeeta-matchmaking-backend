@@ -304,13 +304,13 @@ export default class AdminService {
     if (searchFilter.gender) {
       conditions.push("#gender = :gender");
       attributeNames["#gender"] = "gender";
-      attributeValues[":gender"] = { S: searchFilter.gender };
+      attributeValues[":gender"] = { S: searchFilter.gender.toLowerCase() };
     }
 
     if (searchFilter.city) {
       conditions.push("#city = :city");
       attributeNames["#city"] = "city";
-      attributeValues[":city"] = { S: searchFilter.city };
+      attributeValues[":city"] = { S: searchFilter.city.toLowerCase() };
     }
 
     if (searchFilter.age) {
@@ -322,13 +322,13 @@ export default class AdminService {
     if (searchFilter.religion) {
       conditions.push("#religion = :religion");
       attributeNames["#religion"] = "religion";
-      attributeValues[":religion"] = { S: searchFilter.religion };
+      attributeValues[":religion"] = { S: searchFilter.religion.toLowerCase() };
     }
 
     if (searchFilter.ethnicity) {
       conditions.push("#ethnicity = :ethnicity");
       attributeNames["#ethnicity"] = "ethnicity";
-      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity.toLowerCase() };
     }
 
     if (searchFilter.height) {
@@ -340,25 +340,25 @@ export default class AdminService {
     if (searchFilter.hasChildren !== undefined) {
       conditions.push("#hasChildren = :hasChildren");
       attributeNames["#hasChildren"] = "hasChildren";
-      attributeValues[":hasChildren"] = { BOOL: searchFilter.hasChildren };
+      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren.toLowerCase() };
     }
 
     if (searchFilter.wantChildren !== undefined) {
       conditions.push("#wantChildren = :wantChildren");
       attributeNames["#wantChildren"] = "wantChildren";
-      attributeValues[":wantChildren"] = { BOOL: searchFilter.wantChildren };
+      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren.toLowerCase() };
     }
 
     if (searchFilter.profession) {
       conditions.push("#profession = :profession");
       attributeNames["#profession"] = "profession";
-      attributeValues[":profession"] = { S: searchFilter.profession };
+      attributeValues[":profession"] = { S: searchFilter.profession.toLowerCase() };
     }
 
-    if (searchFilter.education) {
-      conditions.push("#education = :education");
-      attributeNames["#education"] = "education";
-      attributeValues[":education"] = { S: searchFilter.education };
+    if (searchFilter.universityDegree) {
+      conditions.push("#universityDegree = :universityDegree");
+      attributeNames["#universityDegree"] = "universityDegree";
+      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree.toLowerCase() };
     }
 
     return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
@@ -368,11 +368,11 @@ export default class AdminService {
     const attributeValues: AttributeValues = {};
 
     if (searchFilter.gender) {
-      attributeValues[":gender"] = { S: searchFilter.gender };
+      attributeValues[":gender"] = { S: searchFilter.gender.toLowerCase() };
     }
 
     if (searchFilter.city) {
-      attributeValues[":city"] = { S: searchFilter.city };
+      attributeValues[":city"] = { S: searchFilter.city.toLowerCase() };
     }
 
     if (searchFilter.age) {
@@ -380,11 +380,11 @@ export default class AdminService {
     }
 
     if (searchFilter.religion) {
-      attributeValues[":religion"] = { S: searchFilter.religion };
+      attributeValues[":religion"] = { S: searchFilter.religion.toLowerCase() };
     }
 
     if (searchFilter.ethnicity) {
-      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity.toLowerCase() };
     }
 
     if (searchFilter.height) {
@@ -392,19 +392,19 @@ export default class AdminService {
     }
 
     if (searchFilter.hasChildren !== undefined) {
-      attributeValues[":hasChildren"] = { BOOL: searchFilter.hasChildren };
+      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren.toLowerCase() };
     }
 
     if (searchFilter.wantChildren !== undefined) {
-      attributeValues[":wantChildren"] = { BOOL: searchFilter.wantChildren };
+      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren.toLowerCase() };
     }
 
     if (searchFilter.profession) {
-      attributeValues[":profession"] = { S: searchFilter.profession };
+      attributeValues[":profession"] = { S: searchFilter.profession.toLowerCase() };
     }
 
-    if (searchFilter.education) {
-      attributeValues[":education"] = { S: searchFilter.education };
+    if (searchFilter.universityDegree) {
+      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree.toLowerCase() };
     }
 
     return attributeValues;

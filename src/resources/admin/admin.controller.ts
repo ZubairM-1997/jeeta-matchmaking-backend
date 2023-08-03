@@ -13,10 +13,10 @@ export interface SearchFilter {
   religion?: string;
   ethnicity?: string;
   height?: number;
-  hasChildren?: boolean;
-  wantChildren?: boolean;
+  hasChildren?: string;
+  wantChildren?: string;
   profession?: string;
-  education?: string;
+  universityDegree?: string;
 }
 
 export default class AdminController implements Controller {
@@ -141,7 +141,7 @@ export default class AdminController implements Controller {
       hasChildren,
       wantChildren,
       profession,
-      education,
+      universityDegree,
     } = req.body;
 
     // Construct a search filter based on the provided parameters
@@ -156,7 +156,7 @@ export default class AdminController implements Controller {
     if (hasChildren) searchFilter.hasChildren = hasChildren;
     if (wantChildren) searchFilter.wantChildren = wantChildren;
     if (profession) searchFilter.profession = profession;
-    if (education) searchFilter.education = education;
+    if (universityDegree) searchFilter.universityDegree = universityDegree;
 
     try {
       // Call the adminService method to search for users based on the filter

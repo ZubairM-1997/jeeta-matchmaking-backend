@@ -192,20 +192,21 @@ export default class UserService {
       birthday: {S: birthday},
       mobileNumber: {S: mobileNumber},
       address: {S: fullAddress},
-      gender: {S: gender},
+      city: {S: city.toLowerCase()},
+      gender: {S: gender.toLowerCase()},
       height: {S: height},
       age: {S: age.toString()},
-      religion: {S: religion},
-      practicing: {S: practicing},
-      ethnicity: {S: ethnicity},
-      marital_status: {S: marital_status},
-      wantChildren: {S: wantChildren},
-      hasChildren: {S: hasChildren},
-      howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs},
-      universityDegree: {S: universityDegree},
+      religion: {S: religion.toLowerCase()},
+      practicing: {S: practicing.toLowerCase()},
+      ethnicity: {S: ethnicity.toLowerCase()},
+      marital_status: {S: marital_status.toLowerCase()},
+      wantChildren: {S: wantChildren.toLowerCase() },
+      hasChildren: {S: hasChildren.toLowerCase() },
+      howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs.toLowerCase()},
+      universityDegree: {S: universityDegree.toLowerCase()},
       annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, // Use { NULL: true } for undefined values
       netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
-      profession: {S: profession},
+      profession: {S: profession.toLowerCase()},
       approved: { BOOL: false },
     }
 
@@ -259,16 +260,16 @@ export default class UserService {
      userProfileInfo.fullName = fullName;
      userProfileInfo.mobileNumber = mobileNumber;
      userProfileInfo.address = fullAddress;
-     userProfileInfo.gender = gender;
+     userProfileInfo.gender = gender.toLowerCase();
      userProfileInfo.height = height;
-     userProfileInfo.ethnicity = ethnicity;
-     userProfileInfo.religion = religion;
-     userProfileInfo.practicing = practicing;
-     userProfileInfo.marital_status = marital_status;
-     userProfileInfo.wantChildren = wantChildren;
-     userProfileInfo.universityDegree = universityDegree;
-     userProfileInfo.profession = profession; // Updated attribute name
-     userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs;
+     userProfileInfo.ethnicity = ethnicity.toLowerCase();
+     userProfileInfo.religion = religion.toLowerCase();
+     userProfileInfo.practicing = practicing.toLowerCase();
+     userProfileInfo.marital_status = marital_status.toLowerCase();
+     userProfileInfo.wantChildren = wantChildren.toLowerCase();
+     userProfileInfo.universityDegree = universityDegree.toLowerCase();
+     userProfileInfo.profession = profession.toLowerCase()
+     userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs.toLowerCase();
      userProfileInfo.birthday = birthday;
 
      // Update the user profile info in DynamoDB
