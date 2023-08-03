@@ -50,7 +50,6 @@ export default class UserService {
       console.error("Error scanning users by email:", error);
       throw error;
     }
-
   }
 
   async getUserProfileInfoByUserId(userId: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {

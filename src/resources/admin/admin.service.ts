@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
-
+import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 import { SearchFilter } from "./admin.controller";
 
 interface AttributeNames {
@@ -93,6 +94,82 @@ export default class AdminService {
     }
   }
 
+  async getSingleAdminByUsername(username: string){
+    const params = {
+      TableName: "admins",
+      FilterExpression: "username = :usernameValue",
+      ExpressionAttributeValues: {
+        ":usernameValue": { S: username },
+      },
+    };
+    try {
+      const data = await this.dbClient.scan(params).promise();
+      return data.Items; // This will contain an array of users with the specified email if found, otherwise an empty array
+    } catch (error) {
+      console.error("Error scanning admin by username:", error);
+      throw error;
+    }
+  }
+
+  public async createAdmin(username: string, password: string) {
+    const existingAdmin = await this.getSingleAdminByUsername(username);
+    if (existingAdmin?.length !== 0) {
+      return null;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user object
+    const admin = {
+      adminId: { S: uuidv4() },
+      username: { S: username },
+      password: { S: hashedPassword },
+    };
+
+    const params = {
+      TableName: "admins",
+      Item: admin,
+    };
+
+    try {
+      // Save the user to DynamoDB
+      await this.dbClient.putItem(params).promise();
+      console.log("Admin created successfully.");
+      return admin;
+    } catch (error) {
+      console.error("Error creating Admin:", error);
+      throw error;
+    }
+  }
+
+  public async loginAdmin(username: string, password: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    try {
+      const admin = await this.getSingleAdminByUsername(username);
+
+      if (admin && admin.length > 0) {
+        const adminFound = admin[0];
+        const hashedPassword = adminFound.password?.S as string | undefined;
+
+        if (hashedPassword) {
+          const passwordMatch = await bcrypt.compare(password, hashedPassword);
+
+          if (passwordMatch) {
+            const { password, ...adminDataWithoutPassword } = adminFound;
+            console.log(adminDataWithoutPassword)
+            return adminDataWithoutPassword;
+          }
+        }
+      }
+
+      // If the user is not found or passwords don't match, return null
+      return null;
+    } catch (error) {
+      console.error("Error during admin login:", error);
+      throw error;
+    }
+  }
+
+
   public async getAllUsers() {
     const params = {
       TableName: "user_bios",
@@ -126,7 +203,7 @@ export default class AdminService {
       throw error;
     }
   }
-  
+
   private async getUserBioPhotoFromS3(
     userBioId: string,
   ): Promise<string | null> {

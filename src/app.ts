@@ -40,7 +40,7 @@ export default class App {
     const usersController = new UsersController(this.dbClient, this.s3Client);
     const adminController = new AdminController(this.dbClient, this.s3Client);
     this.express.use(`/api`, usersController.router);
-    this.express.use(`/admin`, adminController.router);
+    this.express.use(`/api`, adminController.router);
   }
 
   public async init(): Promise<void> {

@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk");
 
-// import { authenticateToken } from "../../middleware/middleware";
+import jwt from "jsonwebtoken";
 import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import AdminService from "./admin.service";
@@ -20,7 +20,7 @@ export interface SearchFilter {
 }
 
 export default class AdminController implements Controller {
-  public path = "/user";
+  public path = "/admin";
   public router = Router();
   adminService: AdminService;
 
@@ -51,11 +51,52 @@ export default class AdminController implements Controller {
   }
 
   createAdmin = async (req: Request, res: Response): Promise<Response | void> => {
+    const { username, password } = req.body;
+
+    const user = await this.adminService.createAdmin(username, password);
+
+    if (user) {
+      res.status(200).send({
+        user,
+      });
+    } else {
+      res.status(422).json({
+        message: `Admin ${username} already exists`,
+      });
+    }
 
   }
 
   loginAdmin = async (req: Request, res: Response): Promise<Response | void> => {
-    
+    const { username, password } = req.body;
+
+    try {
+      const admin = await this.adminService.getSingleAdminByUsername(username);
+
+      if (!admin || admin.length === 0) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const secretKey = process.env.ADMIN_SECRET_KEY as string; // Replace this with your actual environment variable name
+
+
+      if (!secretKey) {
+        return res.status(500).json({ message: "JWT secret key not found" });
+      }
+
+      const adminMatch = await this.adminService.loginAdmin(username, password)
+      if (!adminMatch) {
+        return res.status(400).json({message: "Invalid password entered"})
+      }
+
+      const token = jwt.sign({adminMatch}, secretKey, { expiresIn: "1h" });
+
+      return res.status(200).json({ token });
+    } catch (error) {
+      console.error("Error during login:", error);
+      return res.status(500).json({ message: "Failed to log in" });
+    }
+
 
   }
 

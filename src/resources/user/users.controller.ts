@@ -69,6 +69,9 @@ export default class UsersController implements Controller {
       }
 
       const userMatch = await this.userService.loginUser(email, password)
+      if (!userMatch) {
+        return res.status(400).json({message: "Invalid password entered"})
+      }
 
       const token = jwt.sign({userMatch}, secretKey, { expiresIn: "1h" });
 
