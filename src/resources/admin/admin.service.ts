@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { SearchFilter } from "./admin.controller";
 import { DynamoDB } from 'aws-sdk';
+import { AttributeMap } from 'aws-sdk/clients/dynamodb';
 
 interface AttributeNames {
   [key: string]: string;
@@ -202,7 +203,7 @@ export default class AdminService {
 
   public async getAllUsers() {
     const params = {
-      TableName: "user_bios",
+      TableName: "user_bio_info",
     };
 
     try {
@@ -234,8 +235,49 @@ export default class AdminService {
     }
   }
 
+
+  async searchUsers(searchFilter: SearchFilter) {
+    const params = {
+      TableName: "user_bios",
+      FilterExpression: this.generateFilterExpression(searchFilter),
+      ExpressionAttributeValues: this.generateExpressionAttributeValues(
+        searchFilter
+      ),
+    };
+
+    try {
+      const scanResult = await this.dbClient.scan(params).promise();
+
+      if (scanResult.Items && scanResult.Items.length > 0) {
+        const usersWithPhotos = await this.fetchPhotosForUsers(scanResult.Items);
+        return usersWithPhotos;
+      } else {
+        console.warn("No users found matching the search criteria.");
+        return [];
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+      throw error;
+    }
+  }
+
+  private async fetchPhotosForUsers(users: AttributeMap[]) {
+    // Prepare the promises to fetch photos for each user
+    const fetchPhotoPromises = users.map(async (user) => {
+      const userBioId = user.userBioId?.S;
+      if (userBioId) {
+        const photo = await this.getUserBioPhotoFromS3(userBioId);
+        return { ...user, photo };
+      }
+      return user;
+    });
+
+    // Wait for all the promises to resolve and return the results
+    return Promise.all(fetchPhotoPromises);
+  }
+
   private async getUserBioPhotoFromS3(
-    userBioId: string,
+    userBioId: string
   ): Promise<string | null> {
     // Prepare the parameters for S3 GetObject operation
     const params = {
@@ -254,25 +296,7 @@ export default class AdminService {
     }
   }
 
-  async searchUsers(searchFilter: SearchFilter) {
-    const params = {
-      TableName: "user_bios",
-      FilterExpression: this.generateFilterExpression(searchFilter),
-      ExpressionAttributeValues:
-        this.generateExpressionAttributeValues(searchFilter),
-    };
-
-    try {
-      const scanResult = await this.dbClient.scan(params).promise();
-
-      return scanResult.Items || [];
-    } catch (error) {
-      console.error("Error searching users:", error);
-      throw error;
-    }
-  }
-
-  generateFilterExpression(searchFilter: SearchFilter): string {
+  private generateFilterExpression(searchFilter: SearchFilter): string {
     const conditions = [];
     const attributeNames: AttributeNames = {};
     const attributeValues: AttributeValues = {};
@@ -289,10 +313,58 @@ export default class AdminService {
       attributeValues[":city"] = { S: searchFilter.city };
     }
 
-    return conditions.join(" AND ");
+    if (searchFilter.age) {
+      conditions.push("#age = :age");
+      attributeNames["#age"] = "age";
+      attributeValues[":age"] = { N: searchFilter.age.toString() };
+    }
+
+    if (searchFilter.religion) {
+      conditions.push("#religion = :religion");
+      attributeNames["#religion"] = "religion";
+      attributeValues[":religion"] = { S: searchFilter.religion };
+    }
+
+    if (searchFilter.ethnicity) {
+      conditions.push("#ethnicity = :ethnicity");
+      attributeNames["#ethnicity"] = "ethnicity";
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
+    }
+
+    if (searchFilter.height) {
+      conditions.push("#height = :height");
+      attributeNames["#height"] = "height";
+      attributeValues[":height"] = { N: searchFilter.height.toString() };
+    }
+
+    if (searchFilter.hasChildren !== undefined) {
+      conditions.push("#hasChildren = :hasChildren");
+      attributeNames["#hasChildren"] = "hasChildren";
+      attributeValues[":hasChildren"] = { BOOL: searchFilter.hasChildren };
+    }
+
+    if (searchFilter.wantChildren !== undefined) {
+      conditions.push("#wantChildren = :wantChildren");
+      attributeNames["#wantChildren"] = "wantChildren";
+      attributeValues[":wantChildren"] = { BOOL: searchFilter.wantChildren };
+    }
+
+    if (searchFilter.profession) {
+      conditions.push("#profession = :profession");
+      attributeNames["#profession"] = "profession";
+      attributeValues[":profession"] = { S: searchFilter.profession };
+    }
+
+    if (searchFilter.education) {
+      conditions.push("#education = :education");
+      attributeNames["#education"] = "education";
+      attributeValues[":education"] = { S: searchFilter.education };
+    }
+
+    return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
   }
 
-  generateExpressionAttributeValues(searchFilter: SearchFilter) {
+  private generateExpressionAttributeValues(searchFilter: SearchFilter) {
     const attributeValues: AttributeValues = {};
 
     if (searchFilter.gender) {
@@ -303,6 +375,45 @@ export default class AdminService {
       attributeValues[":city"] = { S: searchFilter.city };
     }
 
+    if (searchFilter.age) {
+      attributeValues[":age"] = { N: searchFilter.age.toString() };
+    }
+
+    if (searchFilter.religion) {
+      attributeValues[":religion"] = { S: searchFilter.religion };
+    }
+
+    if (searchFilter.ethnicity) {
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
+    }
+
+    if (searchFilter.height) {
+      attributeValues[":height"] = { N: searchFilter.height.toString() };
+    }
+
+    if (searchFilter.hasChildren !== undefined) {
+      attributeValues[":hasChildren"] = { BOOL: searchFilter.hasChildren };
+    }
+
+    if (searchFilter.wantChildren !== undefined) {
+      attributeValues[":wantChildren"] = { BOOL: searchFilter.wantChildren };
+    }
+
+    if (searchFilter.profession) {
+      attributeValues[":profession"] = { S: searchFilter.profession };
+    }
+
+    if (searchFilter.education) {
+      attributeValues[":education"] = { S: searchFilter.education };
+    }
+
     return attributeValues;
   }
 }
+
+
+
+
+
+
+
