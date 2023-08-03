@@ -1,40 +1,43 @@
-// import { Request, Response, NextFunction } from "express";
-// import jwt from "jsonwebtoken";
-// import crypto from "crypto";
+import { Request, Response, NextFunction } from "express";
+import jwt, { Secret } from "jsonwebtoken";
 
-// const SECRET_KEY = crypto.randomBytes(32).toString("hex");
 
-// async function generateJWT(email: string, password: string) {
-//   const options = {
-//     expiresIn: "24h",
-//   };
+export const authenticateAdminToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.header("Authorization")?.split(" ")[1];
 
-//   try {
-//     const payload = { email, password };
-//     const token = await jwt.sign(payload, SECRET_KEY, options);
-//     return { error: false, token };
-//   } catch (error) {
-//     return { error: true };
-//   }
-// }
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
+  }
 
-// export const authenticateToken = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction,
-// ) => {
-//   const authHeader = req.headers["authorization"];
-//   const token = authHeader && authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.ADMIN_SECRET_KEY as Secret);
+    req.admin = decoded as { adminData: any }
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden: Invalid token" });
+  }
+};
 
-//   if (!token) {
-//     return res.status(401).json({ message: "Unauthorized" });
-//   }
+export const authenticateUserToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.header("Authorization")?.split(" ")[1];
 
-//   jwt.verify(token, SECRET_KEY, (err, user) => {
-//     if (err) {
-//       return res.status(403).json({ message: "Forbidden" });
-//     }
-//     req.user = user;
-//     next();
-//   });
-// };
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY as Secret);
+    req.admin = decoded as { adminData: any }
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden: Invalid token" });
+  }
+};

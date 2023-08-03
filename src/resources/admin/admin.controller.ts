@@ -4,6 +4,7 @@ const AWS = require("aws-sdk");
 import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import AdminService from "./admin.service";
+import { authenticateAdminToken } from '../../middleware/middleware';
 
 export interface SearchFilter {
   gender?: string;
@@ -30,13 +31,13 @@ export default class AdminController implements Controller {
 
   initialiseRoutes(): void {
     //protected route
-    this.router.get(`${this.path}/:userId`, this.getUser);
+    this.router.get(`${this.path}/:userId`, authenticateAdminToken, this.getUser);
 
     // protected route
-    this.router.get(`${this.path}/allUsers`, this.getAllUsers);
+    this.router.get(`${this.path}/allUsers`, authenticateAdminToken, this.getAllUsers);
 
     // protected route
-    this.router.post(`${this.path}/search`, this.search);
+    this.router.post(`${this.path}/search`, authenticateAdminToken, this.search);
 
     this.router.post(`${this.path}/createAdmin`, this.createAdmin)
     this.router.post(`${this.path}/loginAdmin`, this.loginAdmin)
@@ -44,6 +45,7 @@ export default class AdminController implements Controller {
     // protected route
     this.router.get(
       `${this.path}/:userId/approveApplication`,
+      authenticateAdminToken,
       this.approveApplication,
     );
   }
@@ -54,6 +56,7 @@ export default class AdminController implements Controller {
 
   loginAdmin = async (req: Request, res: Response): Promise<Response | void> => {
     
+
   }
 
 

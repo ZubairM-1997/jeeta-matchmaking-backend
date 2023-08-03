@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
 import jwt from "jsonwebtoken";
+import { authenticateUserToken } from '../../middleware/middleware';
 const AWS = require("aws-sdk");
 
 export default class UsersController implements Controller {
@@ -20,11 +21,13 @@ export default class UsersController implements Controller {
 
     this.router.post(
       `${this.path}/:userId/createApplication`,
+      authenticateUserToken,
       this.createApplication,
     );
 
     this.router.put(
       `${this.path}/:userId/amendApplication`,
+      authenticateUserToken,
       this.amendApplication,
     );
   }
