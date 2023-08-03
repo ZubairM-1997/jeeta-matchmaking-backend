@@ -42,8 +42,8 @@ export default class AdminController implements Controller {
     this.router.post(`${this.path}/createAdmin`, this.createAdmin)
     this.router.post(`${this.path}/loginAdmin`, this.loginAdmin)
 
-    // protected route
-    this.router.get(
+
+    this.router.put(
       `${this.path}/:userId/approveApplication`,
       authenticateAdminToken,
       this.approveApplication,

@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { SearchFilter } from "./admin.controller";
+import { DynamoDB } from 'aws-sdk';
 
 interface AttributeNames {
   [key: string]: string;
@@ -12,12 +13,14 @@ interface AttributeValues {
 }
 
 export default class AdminService {
-  public dbClient: AWS.DynamoDB;
-  public s3Client: AWS.S3;
+  dbClient: AWS.DynamoDB;
+  s3Client: AWS.S3;
+  documentClient: DynamoDB.DocumentClient;
 
   constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.dbClient = dbClient;
     this.s3Client = s3Client;
+    this.documentClient = new DynamoDB.DocumentClient();
   }
 
   async getSingleUser(userId?: string, email?: string) {
@@ -59,40 +62,67 @@ export default class AdminService {
     }
   }
 
-  async approve(userId: string, approved: boolean): Promise<void> {
+  async getUserProfileInfoByUserId(userId: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    const params: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: "user_bio_info",
+      KeyConditionExpression: "userId = :uid",
+      ExpressionAttributeValues: {
+        ":uid": userId,
+      },
+      Limit: 1, // Since userId is unique, we can limit the result to 1 item
+    };
+
     try {
-      // Fetch the user's profile info from the database
-      const params: AWS.DynamoDB.DocumentClient.GetItemInput = {
-        TableName: "user_bios",
-        Key: {
-          userId: { S: userId },
-        },
-      };
-
-      const result = await this.dbClient.getItem(params).promise();
-      const userProfileInfo =
-        result.Item as AWS.DynamoDB.DocumentClient.AttributeMap | null;
-
-      if (!userProfileInfo) {
-        throw new Error("User profile info not found");
+      const result = await this.documentClient.query(params).promise();
+      if (result.Items && result.Items.length > 0) {
+        return result.Items[0] as AWS.DynamoDB.DocumentClient.AttributeMap;
+      } else {
+        return null; // Return null if no matching item found
       }
-
-      // Update the approved field in the user bio
-      userProfileInfo.approved = approved;
-
-      // Save the updated user profile info back to the database
-      const updateParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
-        TableName: "user_bios",
-        Item: userProfileInfo,
-      };
-
-      await this.dbClient.putItem(updateParams).promise();
-      console.log("User profile info updated successfully.");
     } catch (error) {
-      console.error("Error approving application:", error);
+      console.error("Error fetching user profile info:", error);
       throw error;
     }
   }
+
+  public async approve(userId: string, approved: string): Promise<void> {
+    try {
+      const userProfileInfo = await this.getUserProfileInfoByUserId(userId);
+
+      if (!userProfileInfo) {
+        throw new Error("User profile not found.");
+      }
+
+      userProfileInfo.approved = approved;
+
+      await this.updateUserProfileInfo(userProfileInfo);
+
+    } catch (error) {
+      console.error("Error amending application:", error);
+      throw error;
+    }
+  }
+
+  async updateUserProfileInfo(userProfileInfo: AWS.DynamoDB.DocumentClient.AttributeMap): Promise<void> {
+    const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: "user_bio_info",
+      Key: { userId: userProfileInfo.userId, userBioId: userProfileInfo.userBioId  },
+      UpdateExpression: `SET
+        approved = :approved`,
+      ExpressionAttributeValues: {
+        ":approved": userProfileInfo.approved,
+      },
+    };
+
+    try {
+      await this.documentClient.update(params).promise();
+      console.log("User profile info updated in DynamoDB successfully.");
+    } catch (error) {
+      console.error("Error updating user profile info:", error);
+      throw error;
+    }
+  }
+
 
   async getSingleAdminByUsername(username: string){
     const params = {
