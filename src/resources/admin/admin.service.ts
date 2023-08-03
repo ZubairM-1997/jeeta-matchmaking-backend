@@ -301,6 +301,10 @@ export default class AdminService {
     const attributeNames: AttributeNames = {};
     const attributeValues: AttributeValues = {};
 
+    conditions.push("#approved = :approved");
+    attributeNames["#approved"] = "approved";
+    attributeValues[":approved"] = { BOOL: true };
+
     if (searchFilter.gender) {
       conditions.push("#gender = :gender");
       attributeNames["#gender"] = "gender";
@@ -366,6 +370,8 @@ export default class AdminService {
 
   private generateExpressionAttributeValues(searchFilter: SearchFilter) {
     const attributeValues: AttributeValues = {};
+
+    attributeValues[":approved"] = { BOOL: true };
 
     if (searchFilter.gender) {
       attributeValues[":gender"] = { S: searchFilter.gender.toLowerCase() };
