@@ -7,6 +7,6 @@
     "strict": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "src/express.d.ts"],
+  "include": ["src/**/*.ts", "express.d.ts"],
   "exclude": ["node_modules"]
 }

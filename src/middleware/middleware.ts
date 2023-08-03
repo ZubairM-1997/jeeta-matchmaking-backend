@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret, VerifyErrors } from "jsonwebtoken";
 
 
 export const authenticateAdminToken = (
@@ -7,7 +7,7 @@ export const authenticateAdminToken = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.header("Authorization")?.split(" ")[1];
+  const token = req.headers.authorization
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -15,19 +15,21 @@ export const authenticateAdminToken = (
 
   try {
     const decoded = jwt.verify(token, process.env.ADMIN_SECRET_KEY as Secret);
-    req.admin = decoded as { adminData: any }
-    next();
+    if (decoded){
+      next();
+    }
   } catch (error) {
     return res.status(403).json({ message: "Forbidden: Invalid token" });
   }
 };
+
 
 export const authenticateUserToken = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.header("Authorization")?.split(" ")[1];
+  const token = req.headers.authorization
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -35,8 +37,9 @@ export const authenticateUserToken = (
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY as Secret);
-    req.admin = decoded as { adminData: any }
-    next();
+    if (decoded){
+      next();
+    }
   } catch (error) {
     return res.status(403).json({ message: "Forbidden: Invalid token" });
   }

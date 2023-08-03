@@ -109,7 +109,15 @@ export default class UsersController implements Controller {
 
     const { userId } = req.params;
 
+
     try {
+
+      const found = await this.userService.getUserProfileInfoByUserId(userId);
+      if (found) {
+        return res.status(400).json({message: "This user has already made an application"})
+      }
+
+
       const userProfileInfo = await this.userService.saveApplication(
         userId,
         firstName,

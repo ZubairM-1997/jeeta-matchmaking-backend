@@ -126,7 +126,7 @@ export default class AdminService {
       throw error;
     }
   }
-
+  
   private async getUserBioPhotoFromS3(
     userBioId: string,
   ): Promise<string | null> {
