@@ -32,7 +32,6 @@ export default class UserService {
         console.error("Error fetching user by userId:", error);
         throw error;
       }
-
   }
 
   async getSingleUserByEmail(email: string){

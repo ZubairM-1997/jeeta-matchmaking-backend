@@ -24,44 +24,22 @@ export default class AdminService {
     this.documentClient = new DynamoDB.DocumentClient();
   }
 
-  async getSingleUser(userId?: string, email?: string) {
-    if (userId && !email) {
-      // Search by userId
-      const params = {
-        TableName: "users",
-        Key: {
-          userId: { S: userId }, // Assuming userId is a string, adjust the type if it's different
-        },
-      };
+  async getSingleUserByUserId(userId: string) {
+    const params = {
+      TableName: "users",
+      Key: {
+        userId: { S: userId }, // Assuming userId is a string, adjust the type if it's different
+      },
+    };
 
-      try {
-        const data = await this.dbClient.getItem(params).promise();
-        return data.Item; // This will contain the user with the specified userId if found, otherwise null
-      } catch (error) {
-        console.error("Error fetching user by userId:", error);
-        throw error;
-      }
-    } else if (email && !userId) {
-      // Search by email
-      const params = {
-        TableName: "users",
-        FilterExpression: "email = :emailValue",
-        ExpressionAttributeValues: {
-          ":emailValue": { S: email },
-        },
-      };
-
-      try {
-        const data = await this.dbClient.scan(params).promise();
-        return data.Items; // This will contain an array of users with the specified email if found, otherwise an empty array
-      } catch (error) {
-        console.error("Error scanning users by email:", error);
-        throw error;
-      }
-    } else {
-      throw new Error("Either userId or email must be provided.");
+    try {
+      const data = await this.dbClient.getItem(params).promise();
+      return data.Item; // This will contain the user with the specified userId if found, otherwise null
+    } catch (error) {
+      console.error("Error fetching user by userId:", error);
+      throw error;
     }
-  }
+}
 
   async getUserProfileInfoByUserId(userId: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
     const params: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -276,7 +254,7 @@ export default class AdminService {
     return Promise.all(fetchPhotoPromises);
   }
 
-  private async getUserBioPhotoFromS3(
+  public async getUserBioPhotoFromS3(
     userBioId: string
   ): Promise<string | null> {
     // Prepare the parameters for S3 GetObject operation

@@ -104,11 +104,20 @@ export default class AdminController implements Controller {
   getUser = async (req: Request, res: Response): Promise<Response | void> => {
     const { userId } = req.params as { userId: string };
 
-    const user = await this.adminService.getSingleUser(userId);
+    const user = await this.adminService.getSingleUserByUserId(userId);
+    const userBio = await this.adminService.getUserProfileInfoByUserId(userId);
+    let photo;
+    if (userBio){
+      photo = await this.adminService.getUserBioPhotoFromS3(userBio.userBioId.S)
+    }
 
     if (user) {
       res.status(200).send({
-        user,
+        user: [
+          user,
+          userBio,
+          photo
+        ],
       });
     } else {
       res.status(404).json({
