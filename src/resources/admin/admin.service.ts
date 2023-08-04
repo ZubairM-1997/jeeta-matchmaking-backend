@@ -72,7 +72,7 @@ export default class AdminService {
     }
   }
 
-  public async approve(userId: string, approved: string): Promise<void> {
+  public async approve(userId: string, approved: string) {
     try {
       const userProfileInfo = await this.getUserProfileInfoByUserId(userId);
 
@@ -82,7 +82,7 @@ export default class AdminService {
 
       userProfileInfo.approved = approved;
 
-      await this.updateUserProfileInfo(userProfileInfo);
+     await this.updateUserProfileInfo(userProfileInfo);
 
     } catch (error) {
       console.error("Error amending application:", error);
@@ -90,7 +90,7 @@ export default class AdminService {
     }
   }
 
-  async updateUserProfileInfo(userProfileInfo: AWS.DynamoDB.DocumentClient.AttributeMap): Promise<void> {
+  async updateUserProfileInfo(userProfileInfo: AWS.DynamoDB.DocumentClient.AttributeMap) {
     const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: "user_bio_info",
       Key: { userId: userProfileInfo.userId, userBioId: userProfileInfo.userBioId  },
@@ -102,7 +102,7 @@ export default class AdminService {
     };
 
     try {
-      await this.documentClient.update(params).promise();
+      this.documentClient.update(params).promise();
       console.log("User profile info updated in DynamoDB successfully.");
     } catch (error) {
       console.error("Error updating user profile info:", error);

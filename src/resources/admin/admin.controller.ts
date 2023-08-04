@@ -5,6 +5,7 @@ import { Router, Request, Response } from "express";
 import Controller from "../../utils/interfaces/controller.interface";
 import AdminService from "./admin.service";
 import { authenticateAdminToken } from '../../middleware/middleware';
+import { Server, Socket } from "socket.io";
 
 export interface SearchFilter {
   gender?: string;
@@ -23,10 +24,12 @@ export default class AdminController implements Controller {
   public path = "/admin";
   public router = Router();
   adminService: AdminService;
+  private io: Server;
 
-  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
+  constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3, io: Server) {
     this.initialiseRoutes();
     this.adminService = new AdminService(dbClient, s3Client);
+    this.io = io;
   }
 
   initialiseRoutes(): void {
@@ -189,6 +192,7 @@ export default class AdminController implements Controller {
     try {
       // Call the adminService method to approve the application
       await this.adminService.approve(userId, approved);
+      this.notifyUserApplicationApproved(userId);
 
       return res
         .status(200)
@@ -198,4 +202,25 @@ export default class AdminController implements Controller {
       return res.status(500).json({ message: "Failed to approve application" });
     }
   };
+
+  private notifyUserApplicationApproved(userId: string) {
+    const connectedSocket = this.findConnectedSocketByUserId(userId);
+
+    if (connectedSocket) {
+      connectedSocket.emit("applicationApproved", { userId });
+    }
+  }
+
+  private findConnectedSocketByUserId(userId: string): Socket | null {
+    for (const [socketId, socket] of this.io.sockets.sockets.entries()) {
+      const { userMatch } = socket.handshake.auth;
+
+      if (userMatch && userMatch.userId === userId) {
+        return socket;
+      }
+    }
+
+    return null; // If no connected socket is found with the matching userId
+  }
+
 }

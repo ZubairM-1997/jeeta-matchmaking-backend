@@ -4,16 +4,22 @@ import bodyParser from "body-parser";
 import { DynamoDB, S3 } from "aws-sdk";
 import UsersController from "./resources/user/users.controller";
 import AdminController from "./resources/admin/admin.controller";
+import http from "http";
+import { Server } from "socket.io";
 
 export default class App {
   public express: Application;
   public dbClient: DynamoDB;
   public s3Client: S3;
+  private httpServer: http.Server;
+  private io: Server;
 
   constructor(dbClient: DynamoDB, s3Client: S3) {
     this.express = express();
     this.dbClient = dbClient;
     this.s3Client = s3Client;
+    this.httpServer = http.createServer(this.express);
+    this.io = new Server(this.httpServer);
   }
 
   private initialiseMiddleWare(): void {
@@ -38,7 +44,7 @@ export default class App {
 
   private initialiseControllers() {
     const usersController = new UsersController(this.dbClient, this.s3Client);
-    const adminController = new AdminController(this.dbClient, this.s3Client);
+    const adminController = new AdminController(this.dbClient, this.s3Client, this.io);
     this.express.use(`/api`, usersController.router);
     this.express.use(`/api`, adminController.router);
   }
@@ -56,7 +62,7 @@ export default class App {
 
   public async listen(port: number): Promise<void> {
     await this.init();
-    this.express.listen(port, () => {
+    this.httpServer.listen(port, () => {
       console.log(`App listening on port ${port}`);
     });
   }
