@@ -34,7 +34,7 @@ export default class AdminController implements Controller {
     this.router.get(`${this.path}/:userId`, authenticateAdminToken, this.getUser);
 
     // protected route
-    this.router.get(`${this.path}/allUsers`, authenticateAdminToken, this.getAllUsers);
+    this.router.get(`${this.path}/getAllUsers`, authenticateAdminToken, this.getAllUsers);
 
     // protected route
     this.router.post(`${this.path}/search`, authenticateAdminToken, this.search);
@@ -108,7 +108,7 @@ export default class AdminController implements Controller {
     const userBio = await this.adminService.getUserProfileInfoByUserId(userId);
     let photo;
     if (userBio){
-      photo = await this.adminService.getUserBioPhotoFromS3(userBio.userBioId.S)
+      photo = await this.adminService.getUserBioPhotoFromS3(userBio.userBioId)
     }
 
     if (user) {
@@ -130,6 +130,7 @@ export default class AdminController implements Controller {
     req: Request,
     res: Response,
   ): Promise<Response | void> => {
+    console.log("i am here")
     try {
       const result = this.adminService.getAllUsers();
       return res.status(200).json(result);

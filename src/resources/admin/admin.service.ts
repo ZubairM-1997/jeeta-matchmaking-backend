@@ -34,7 +34,15 @@ export default class AdminService {
 
     try {
       const data = await this.dbClient.getItem(params).promise();
-      return data.Item; // This will contain the user with the specified userId if found, otherwise null
+      const user = data.Item;
+
+      if (user) {
+        // Exclude the password field from the returned user object
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      }
+
+      return null; 
     } catch (error) {
       console.error("Error fetching user by userId:", error);
       throw error;
@@ -218,21 +226,28 @@ export default class AdminService {
     const params = {
       TableName: "user_bio_info",
       FilterExpression: this.generateFilterExpression(searchFilter),
-      ExpressionAttributeValues: this.generateExpressionAttributeValues(
-        searchFilter
-      ),
+      ExpressionAttributeNames: this.generateExpressionAttributeNames(searchFilter),
+      ExpressionAttributeValues: this.generateExpressionAttributeValues(searchFilter),
     };
 
     try {
       const scanResult = await this.dbClient.scan(params).promise();
 
-      if (scanResult.Items && scanResult.Items.length > 0) {
-        const usersWithPhotos = await this.fetchPhotosForUsers(scanResult.Items);
-        return usersWithPhotos;
-      } else {
-        console.warn("No users found matching the search criteria.");
+      if (!scanResult.Items) {
         return [];
       }
+
+      const usersWithPhotos = await Promise.all(
+        scanResult.Items.map(async (userBio) => {
+          const userBioId = userBio.userBioId.S;
+          const photo = userBioId
+            ? await this.getUserBioPhotoFromS3(userBioId)
+            : null;
+          return { ...userBio, photo };
+        })
+      );
+
+      return usersWithPhotos;
     } catch (error) {
       console.error("Error searching users:", error);
       throw error;
@@ -274,7 +289,7 @@ export default class AdminService {
     }
   }
 
-  private generateFilterExpression(searchFilter: SearchFilter): string {
+  generateFilterExpression(searchFilter: SearchFilter): string {
     const conditions = [];
     const attributeNames: AttributeNames = {};
     const attributeValues: AttributeValues = {};
@@ -286,13 +301,13 @@ export default class AdminService {
     if (searchFilter.gender) {
       conditions.push("#gender = :gender");
       attributeNames["#gender"] = "gender";
-      attributeValues[":gender"] = { S: searchFilter.gender.toLowerCase() };
+      attributeValues[":gender"] = { S: searchFilter.gender };
     }
 
     if (searchFilter.city) {
       conditions.push("#city = :city");
       attributeNames["#city"] = "city";
-      attributeValues[":city"] = { S: searchFilter.city.toLowerCase() };
+      attributeValues[":city"] = { S: searchFilter.city };
     }
 
     if (searchFilter.age) {
@@ -304,13 +319,13 @@ export default class AdminService {
     if (searchFilter.religion) {
       conditions.push("#religion = :religion");
       attributeNames["#religion"] = "religion";
-      attributeValues[":religion"] = { S: searchFilter.religion.toLowerCase() };
+      attributeValues[":religion"] = { S: searchFilter.religion };
     }
 
     if (searchFilter.ethnicity) {
       conditions.push("#ethnicity = :ethnicity");
       attributeNames["#ethnicity"] = "ethnicity";
-      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity.toLowerCase() };
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
     }
 
     if (searchFilter.height) {
@@ -322,41 +337,93 @@ export default class AdminService {
     if (searchFilter.hasChildren !== undefined) {
       conditions.push("#hasChildren = :hasChildren");
       attributeNames["#hasChildren"] = "hasChildren";
-      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren.toLowerCase() };
+      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren };
     }
 
     if (searchFilter.wantChildren !== undefined) {
       conditions.push("#wantChildren = :wantChildren");
       attributeNames["#wantChildren"] = "wantChildren";
-      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren.toLowerCase() };
+      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren };
     }
 
     if (searchFilter.profession) {
       conditions.push("#profession = :profession");
       attributeNames["#profession"] = "profession";
-      attributeValues[":profession"] = { S: searchFilter.profession.toLowerCase() };
+      attributeValues[":profession"] = { S: searchFilter.profession };
     }
 
     if (searchFilter.universityDegree) {
       conditions.push("#universityDegree = :universityDegree");
       attributeNames["#universityDegree"] = "universityDegree";
-      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree.toLowerCase() };
+      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree };
     }
 
-    return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
+    // Add more conditions for other search filters if needed
+
+    return conditions.join(" AND ");
   }
 
-  private generateExpressionAttributeValues(searchFilter: SearchFilter) {
+  generateExpressionAttributeNames(searchFilter: SearchFilter): AttributeNames {
+    const attributeNames: AttributeNames = {};
+
+    attributeNames["#approved"] = "approved";
+
+    if (searchFilter.gender) {
+      attributeNames["#gender"] = "gender";
+    }
+
+    if (searchFilter.city) {
+      attributeNames["#city"] = "city";
+    }
+
+    if (searchFilter.age) {
+      attributeNames["#age"] = "age";
+    }
+
+    if (searchFilter.religion) {
+      attributeNames["#religion"] = "religion";
+    }
+
+    if (searchFilter.ethnicity) {
+      attributeNames["#ethnicity"] = "ethnicity";
+    }
+
+    if (searchFilter.height) {
+      attributeNames["#height"] = "height";
+    }
+
+    if (searchFilter.hasChildren !== undefined) {
+      attributeNames["#hasChildren"] = "hasChildren";
+    }
+
+    if (searchFilter.wantChildren !== undefined) {
+      attributeNames["#wantChildren"] = "wantChildren";
+    }
+
+    if (searchFilter.profession) {
+      attributeNames["#profession"] = "profession";
+    }
+
+    if (searchFilter.universityDegree) {
+      attributeNames["#universityDegree"] = "universityDegree";
+    }
+
+    // Add more attribute names for other search filters if needed
+
+    return attributeNames;
+  }
+
+  generateExpressionAttributeValues(searchFilter: SearchFilter): AttributeValues {
     const attributeValues: AttributeValues = {};
 
     attributeValues[":approved"] = { BOOL: true };
 
     if (searchFilter.gender) {
-      attributeValues[":gender"] = { S: searchFilter.gender.toLowerCase() };
+      attributeValues[":gender"] = { S: searchFilter.gender };
     }
 
     if (searchFilter.city) {
-      attributeValues[":city"] = { S: searchFilter.city.toLowerCase() };
+      attributeValues[":city"] = { S: searchFilter.city };
     }
 
     if (searchFilter.age) {
@@ -364,11 +431,11 @@ export default class AdminService {
     }
 
     if (searchFilter.religion) {
-      attributeValues[":religion"] = { S: searchFilter.religion.toLowerCase() };
+      attributeValues[":religion"] = { S: searchFilter.religion };
     }
 
     if (searchFilter.ethnicity) {
-      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity.toLowerCase() };
+      attributeValues[":ethnicity"] = { S: searchFilter.ethnicity };
     }
 
     if (searchFilter.height) {
@@ -376,20 +443,22 @@ export default class AdminService {
     }
 
     if (searchFilter.hasChildren !== undefined) {
-      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren.toLowerCase() };
+      attributeValues[":hasChildren"] = { S: searchFilter.hasChildren };
     }
 
     if (searchFilter.wantChildren !== undefined) {
-      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren.toLowerCase() };
+      attributeValues[":wantChildren"] = { S: searchFilter.wantChildren };
     }
 
     if (searchFilter.profession) {
-      attributeValues[":profession"] = { S: searchFilter.profession.toLowerCase() };
+      attributeValues[":profession"] = { S: searchFilter.profession };
     }
 
     if (searchFilter.universityDegree) {
-      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree.toLowerCase() };
+      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree };
     }
+
+    // Add more attribute values for other search filters if needed
 
     return attributeValues;
   }
