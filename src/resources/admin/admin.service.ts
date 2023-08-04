@@ -42,7 +42,7 @@ export default class AdminService {
         return userWithoutPassword;
       }
 
-      return null; 
+      return null;
     } catch (error) {
       console.error("Error fetching user by userId:", error);
       throw error;
