@@ -275,7 +275,7 @@ export default class UserService {
      await this.updateUserProfileInfo(userProfileInfo);
 
      // Update the photo in S3 using the correct userBioId
-    //  await this.updatePhotoInS3(userProfileInfo.userBioId.S, photo);
+     await this.updatePhotoInS3(userProfileInfo.userBioId.S, photo);
 
      console.log("User profile info and photo updated successfully.");
       // console.log("User photo updated in S3 successfully.");
@@ -335,15 +335,34 @@ export default class UserService {
   async updatePhotoInS3(userBioId: string, photo: Buffer): Promise<void> {
     const photoKey = userBioId; // Change the extension based on the photo type
 
-    const params: AWS.S3.PutObjectRequest = {
+    const previousPhotoParams: AWS.S3.GetObjectRequest = {
       Bucket: "user-bio-pics", // Replace with the actual name of your S3 bucket
+      Key: photoKey,
+    };
+
+    try {
+      await this.s3Client.headObject(previousPhotoParams).promise();
+
+      const deleteParams: AWS.S3.DeleteObjectRequest = {
+        Bucket: "user-bio-pics", 
+        Key: photoKey,
+      };
+      await this.s3Client.deleteObject(deleteParams).promise();
+    } catch (error) {
+        console.error("Error deleting previous photo from S3:", error);
+        throw error;
+
+    }
+
+    // Upload the new photo to S3
+    const uploadParams: AWS.S3.PutObjectRequest = {
+      Bucket: "user-bio-pics", 
       Key: photoKey,
       Body: photo,
     };
 
     try {
-      // Upload the new photo to S3
-      await this.s3Client.putObject(params).promise();
+      await this.s3Client.putObject(uploadParams).promise();
       console.log("New photo uploaded to S3 successfully.");
     } catch (error) {
       console.error("Error uploading new photo to S3:", error);

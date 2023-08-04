@@ -254,20 +254,6 @@ export default class AdminService {
     }
   }
 
-  private async fetchPhotosForUsers(users: AttributeMap[]) {
-    // Prepare the promises to fetch photos for each user
-    const fetchPhotoPromises = users.map(async (user) => {
-      const userBioId = user.userBioId?.S;
-      if (userBioId) {
-        const photo = await this.getUserBioPhotoFromS3(userBioId);
-        return { ...user, photo };
-      }
-      return user;
-    });
-
-    // Wait for all the promises to resolve and return the results
-    return Promise.all(fetchPhotoPromises);
-  }
 
   public async getUserBioPhotoFromS3(
     userBioId: string
