@@ -38,16 +38,26 @@ export default class UsersController implements Controller {
   ): Promise<Response | void> => {
     const { username, email, password } = req.body;
 
-    const user = await this.userService.createUser(username, email, password);
+    try {
+      const user = await this.userService.getSingleUserByEmail(email);
 
-    if (user) {
-      res.status(200).send({
-        user,
-      });
-    } else {
-      res.status(422).json({
-        message: "User already exists",
-      });
+      if (user && user.length > 0) {
+        return res.status(401).json({ message: "User already exists" });
+      }
+
+      const secretKey = process.env.JWT_SECRET_KEY as string; // Replace this with your actual environment variable name
+      if (!secretKey) {
+        return res.status(500).json({ message: "JWT secret key not found" });
+      }
+
+      const createdUser = await this.userService.createUser(username, email, password);
+      const token = jwt.sign({createdUser}, secretKey, { expiresIn: "1h" });
+
+      return res.status(200).json({ token });
+
+    } catch(error){
+      console.error("Error during login:", error);
+      return res.status(500).json({ message: "Failed to log in" });
     }
   };
 

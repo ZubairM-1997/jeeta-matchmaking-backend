@@ -76,12 +76,6 @@ export default class UserService {
 
 
   public async createUser(username: string, email: string, password: string) {
-    const existingUser = await this.getSingleUserByEmail(email);
-    console.log(existingUser)
-    if (existingUser?.length !== 0) {
-      throw new Error("User with this email already exists.");
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user object
@@ -344,7 +338,7 @@ export default class UserService {
       await this.s3Client.headObject(previousPhotoParams).promise();
 
       const deleteParams: AWS.S3.DeleteObjectRequest = {
-        Bucket: "user-bio-pics", 
+        Bucket: "user-bio-pics",
         Key: photoKey,
       };
       await this.s3Client.deleteObject(deleteParams).promise();
@@ -356,7 +350,7 @@ export default class UserService {
 
     // Upload the new photo to S3
     const uploadParams: AWS.S3.PutObjectRequest = {
-      Bucket: "user-bio-pics", 
+      Bucket: "user-bio-pics",
       Key: photoKey,
       Body: photo,
     };
