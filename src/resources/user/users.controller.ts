@@ -53,7 +53,7 @@ export default class UsersController implements Controller {
       const createdUser = await this.userService.createUser(username, email, password);
       const token = jwt.sign({createdUser}, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({ jwt: token });
+      return res.status(200).json({ jwt: token, userId: createdUser.userId });
 
     } catch(error){
       console.error("Error during login:", error);
@@ -85,7 +85,7 @@ export default class UsersController implements Controller {
 
       const token = jwt.sign({userMatch}, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({ jwt: token });
+      return res.status(200).json({ jwt: token, userId: userMatch.userId });
     } catch (error) {
       console.error("Error during login:", error);
       return res.status(500).json({ message: "Failed to log in" });
