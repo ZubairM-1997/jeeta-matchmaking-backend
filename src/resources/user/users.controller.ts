@@ -53,7 +53,7 @@ export default class UsersController implements Controller {
       const createdUser = await this.userService.createUser(username, email, password);
       const token = jwt.sign({createdUser}, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({ token });
+      return res.status(200).json({ jwt: token });
 
     } catch(error){
       console.error("Error during login:", error);
@@ -85,7 +85,7 @@ export default class UsersController implements Controller {
 
       const token = jwt.sign({userMatch}, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({ token });
+      return res.status(200).json({ jwt: token });
     } catch (error) {
       console.error("Error during login:", error);
       return res.status(500).json({ message: "Failed to log in" });
@@ -117,6 +117,9 @@ export default class UsersController implements Controller {
       birthday,
       annualIncome,
       netWorth,
+      contactPreference,
+      consultationPreference,
+      consent,
       photo
     } = req.body;
 
@@ -152,6 +155,9 @@ export default class UsersController implements Controller {
         howDidYouLearnAboutUs,
         photo,
         city,
+        contactPreference,
+        consultationPreference,
+        consent,
         annualIncome,
         netWorth,
       );

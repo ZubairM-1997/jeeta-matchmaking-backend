@@ -150,6 +150,9 @@ export default class UserService {
     howDidYouLearnAboutUs: string,
     photo: Buffer,
     city: string,
+    contactPreference: string,
+    consultationPreference: string,
+    consent: string,
     annualIncome?: number,
     netWorth?: number,
   ) {
@@ -201,6 +204,9 @@ export default class UserService {
       netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
       profession: {S: profession.toLowerCase()},
       approved: { BOOL: false },
+      contactPreference: {S: contactPreference},
+      consultationPreference: {S: consultationPreference},
+      consent: {S: consent}
     }
 
 
