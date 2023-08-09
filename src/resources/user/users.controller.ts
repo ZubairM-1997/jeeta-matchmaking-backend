@@ -3,6 +3,7 @@ import Controller from "../../utils/interfaces/controller.interface";
 import UserService from "./users.service";
 import jwt from "jsonwebtoken";
 import { authenticateUserToken } from '../../middleware/middleware';
+import { UploadedFile } from 'express-fileupload';
 const AWS = require("aws-sdk");
 
 export default class UsersController implements Controller {
@@ -119,12 +120,11 @@ export default class UsersController implements Controller {
       netWorth,
       contactPreference,
       consultationPreference,
-      consent,
-      photo
+      consent
     } = req.body;
 
     const { userId } = req.params;
-
+    console.log(req.body)
 
     try {
 
@@ -133,7 +133,12 @@ export default class UsersController implements Controller {
         return res.status(400).json({message: "This user has already made an application"})
       }
 
+      if (!req.files || !req.files.photo) {
+        return res.status(400).json({ message: "No photo uploaded." });
+      }
 
+      const photo = req.files.photo as UploadedFile;
+      console.log(photo, "PHOTO HERE")
       const userProfileInfo = await this.userService.saveApplication(
         userId,
         firstName,

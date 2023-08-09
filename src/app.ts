@@ -1,4 +1,5 @@
 import express, { Application } from "express";
+import fileUpload from 'express-fileupload'
 import cors from "cors";
 import bodyParser from "body-parser";
 import { DynamoDB, S3 } from "aws-sdk";
@@ -45,6 +46,7 @@ export default class App {
   private initialiseControllers() {
     const usersController = new UsersController(this.dbClient, this.s3Client);
     const adminController = new AdminController(this.dbClient, this.s3Client, this.io);
+    this.express.use(fileUpload())
     this.express.use(`/api`, usersController.router);
     this.express.use(`/api`, adminController.router);
   }

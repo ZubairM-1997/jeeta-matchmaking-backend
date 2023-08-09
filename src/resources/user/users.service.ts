@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 import DynamoDB, { PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
+import { UploadedFile } from 'express-fileupload'
 
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -147,7 +148,7 @@ export default class UserService {
     universityDegree: string,
     profession: string,
     howDidYouLearnAboutUs: string,
-    photo: Buffer,
+    photo: UploadedFile,
     city: string,
     contactPreference: string,
     consultationPreference: string,
@@ -214,13 +215,20 @@ export default class UserService {
       Item: basicInfo,
     };
 
+    let photoBuffer: Buffer;
+    if (photo.data instanceof Buffer) {
+      photoBuffer = photo.data;
+    } else {
+      photoBuffer = Buffer.from(photo.data);
+    }
+
 
     try {
 
       await this.dbClient.putItem(bioInfoParams).promise();
       console.log("User information has successfully been saved")
 
-      await this.uploadPhotoToS3(userBioId, photo);
+      await this.uploadPhotoToS3(userBioId, photoBuffer);
     } catch (error) {
       console.error("Error saving user bio:", error);
       throw error;
@@ -377,7 +385,7 @@ export default class UserService {
       Key: userBioId, // Use the userBioId as the key for the S3 object to associate it with the user bio
       Body: photo, // The photo data you want to upload (e.g., a Buffer or a ReadableStream)
       ContentType: "image/jpeg", // Adjust the content type based on the type of photo you are uploading
-      // You can also add additional metadata or ACL settings as needed.
+      ContentEncoding: 'base64'
     };
 
     try {
