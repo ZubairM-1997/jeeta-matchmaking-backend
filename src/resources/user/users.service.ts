@@ -74,7 +74,6 @@ export default class UserService {
     }
   }
 
-
   public async createUser(username: string, email: string, password: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
