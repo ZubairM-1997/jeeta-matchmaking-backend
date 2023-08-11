@@ -1,5 +1,5 @@
 const AWS = require("aws-sdk");
-import DynamoDB, { PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
+import DynamoDB, { DocumentClient, PutItemInputAttributeMap } from "aws-sdk/clients/dynamodb";
 import { UploadedFile } from 'express-fileupload'
 
 import bcrypt from "bcrypt";
@@ -16,7 +16,69 @@ export default class UserService {
     this.documentClient = new DynamoDB.DocumentClient();
   }
 
-  // these functions will directly call dynamoDb to implement the right queries
+  async getUserByGoogleSub(sub: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    const params: DocumentClient.ScanInput = {
+      TableName: "users", // Replace with your DynamoDB table name
+      FilterExpression: "googleSub = :subValue",
+      ExpressionAttributeValues: {
+        ":subValue":  sub,
+      },
+    };
+
+    try {
+      const data = await this.documentClient.scan(params).promise();
+      if (data.Items && data.Items.length > 0) {
+        return data.Items[0] as AWS.DynamoDB.DocumentClient.AttributeMap;
+      } else {
+        return null; // Return null if no matching item found
+      }
+    } catch (error) {
+      console.error("Error scanning users by Google sub:", error);
+      throw error;
+    }
+  }
+
+  async createUserFromGoogle(sub: string, email: string, username: string): Promise<AWS.DynamoDB.DocumentClient.AttributeMap | null> {
+    const existingUser = await this.getUserByGoogleSub(sub);
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const user = {
+      userId: { S: uuidv4() },
+      username: { S: username },
+      email: { S: email },
+      googleSub: { S: sub },
+    };
+
+    const params = {
+      TableName: "users", // Replace with your DynamoDB table name
+      Item: user,
+    };
+
+    try {
+      // Save the user to DynamoDB
+      await this.dbClient.putItem(params).promise();
+      console.log("User created from Google successfully.");
+      return user;
+    } catch (error) {
+      console.error("Error creating user from Google:", error);
+      throw error;
+    }
+  }
+
+  genereateS3Url = async (
+    userBioId: string,
+  ) => {
+    const params = {
+      Bucket: "user-bio-pics", // Replace with the name of your S3 bucket
+      Key: userBioId, // Use the userBioId as the key for the S3 object to associate it with the user bio
+    };
+
+    const uploadURL = this.s3Client.getSignedUrl('putObject' ,params)
+    return uploadURL
+  }
 
   async getSingleUserByUserId(userId: string) {
       const params = {
@@ -148,7 +210,6 @@ export default class UserService {
     universityDegree: string,
     profession: string,
     howDidYouLearnAboutUs: string,
-    photo: UploadedFile,
     city: string,
     contactPreference: string,
     consultationPreference: string,
@@ -215,20 +276,15 @@ export default class UserService {
       Item: basicInfo,
     };
 
-    let photoBuffer: Buffer;
-    if (photo.data instanceof Buffer) {
-      photoBuffer = photo.data;
-    } else {
-      photoBuffer = Buffer.from(photo.data);
-    }
-
-
     try {
 
       await this.dbClient.putItem(bioInfoParams).promise();
       console.log("User information has successfully been saved")
+      return {
+        userBioId,
+        userId
+      }
 
-      await this.uploadPhotoToS3(userBioId, photoBuffer);
     } catch (error) {
       console.error("Error saving user bio:", error);
       throw error;
@@ -373,26 +429,6 @@ export default class UserService {
       console.log("New photo uploaded to S3 successfully.");
     } catch (error) {
       console.error("Error uploading new photo to S3:", error);
-      throw error;
-    }
-  }
-
-
-  private async uploadPhotoToS3(userBioId: string, photo: Buffer) {
-    // Prepare the parameters for S3 PutObject operation
-    const params = {
-      Bucket: "user-bio-pics", // Replace with the name of your S3 bucket
-      Key: userBioId, // Use the userBioId as the key for the S3 object to associate it with the user bio
-      Body: photo, // The photo data you want to upload (e.g., a Buffer or a ReadableStream)
-      ContentType: "image/jpeg", // Adjust the content type based on the type of photo you are uploading
-      ContentEncoding: 'base64'
-    };
-
-    try {
-      await this.s3Client.putObject(params).promise();
-      console.log("Photo uploaded to S3 successfully.");
-    } catch (error) {
-      console.error("Error uploading photo to S3:", error);
       throw error;
     }
   }
