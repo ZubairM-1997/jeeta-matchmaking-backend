@@ -211,7 +211,8 @@ export default class UsersController implements Controller {
       marital_status,
       wantChildren,
       hasChildren,
-      universityDegree,
+      universityDegreeSubject,
+      highestQualification,
       profession,
       howDidYouLearnAboutUs,
       birthday,
@@ -249,7 +250,8 @@ export default class UsersController implements Controller {
         marital_status,
         wantChildren,
         hasChildren,
-        universityDegree,
+        universityDegreeSubject,
+        highestQualification,
         profession,
         howDidYouLearnAboutUs,
         city,
@@ -296,11 +298,11 @@ export default class UsersController implements Controller {
         marital_status,
         wantChildren,
         hasChildren,
-        universityDegree,
+        universityDegreeSubject,
+        highestQualification,
         profession,
         photo,
       } = req.body;
-
 
       await this.userService.amend(
         userId,
@@ -314,7 +316,8 @@ export default class UsersController implements Controller {
         marital_status,
         wantChildren,
         hasChildren,
-        universityDegree,
+        universityDegreeSubject,
+        highestQualification,
         profession,
         photo,
       );

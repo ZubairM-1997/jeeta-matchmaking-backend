@@ -207,7 +207,8 @@ export default class UserService {
     marital_status: string,
     wantChildren: string,
     hasChildren: string,
-    universityDegree: string,
+    universityDegreeSubject: string,
+    highestQualification: string,
     profession: string,
     howDidYouLearnAboutUs: string,
     city: string,
@@ -260,8 +261,9 @@ export default class UserService {
       wantChildren: {S: wantChildren.toLowerCase() },
       hasChildren: {S: hasChildren.toLowerCase() },
       howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs.toLowerCase()},
-      universityDegree: {S: universityDegree.toLowerCase()},
-      annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, // Use { NULL: true } for undefined values
+      universityDegreeSubject: {S: universityDegreeSubject.toLowerCase()},
+      highestQualification: {S: highestQualification.toLocaleLowerCase()},
+      annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, 
       netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
       profession: {S: profession.toLowerCase()},
       approved: { BOOL: false },
@@ -304,7 +306,8 @@ export default class UserService {
     marital_status: string,
     wantChildren: string,
     hasChildren: string,
-    universityDegree: string,
+    universityDegreeSubject: string,
+    highestQualification: string,
     profession: string,
     photo: Buffer,
   ): Promise<void> {
@@ -327,7 +330,8 @@ export default class UserService {
      userProfileInfo.practicing = practicing.toLowerCase();
      userProfileInfo.marital_status = marital_status.toLowerCase();
      userProfileInfo.wantChildren = wantChildren.toLowerCase();
-     userProfileInfo.universityDegree = universityDegree.toLowerCase();
+     userProfileInfo.universityDegreeSubject = universityDegreeSubject.toLowerCase();
+     userProfileInfo.highestQualification = highestQualification.toLowerCase();
      userProfileInfo.profession = profession.toLowerCase()
 
      // Update the user profile info in DynamoDB

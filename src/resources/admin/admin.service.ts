@@ -338,13 +338,17 @@ export default class AdminService {
       attributeValues[":profession"] = { S: searchFilter.profession };
     }
 
-    if (searchFilter.universityDegree) {
-      conditions.push("#universityDegree = :universityDegree");
-      attributeNames["#universityDegree"] = "universityDegree";
-      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree };
+    if (searchFilter.universityDegreeSubject) {
+      conditions.push("#universityDegreeSubject = :universityDegreeSubject");
+      attributeNames["#universityDegreeSubject"] = "universityDegreeSubject";
+      attributeValues[":universityDegreeSubject"] = { S: searchFilter.universityDegreeSubject };
     }
 
-    // Add more conditions for other search filters if needed
+    if (searchFilter.highestQualification) {
+      conditions.push("#highestQualification = :highestQualification");
+      attributeNames["#highestQualification"] = "highestQualification";
+      attributeValues[":highestQualification"] = { S: searchFilter.highestQualification };
+    }
 
     return conditions.join(" AND ");
   }
@@ -390,11 +394,13 @@ export default class AdminService {
       attributeNames["#profession"] = "profession";
     }
 
-    if (searchFilter.universityDegree) {
-      attributeNames["#universityDegree"] = "universityDegree";
+    if (searchFilter.universityDegreeSubject) {
+      attributeNames["#universityDegreeSubject"] = "universityDegreeSubject";
     }
 
-    // Add more attribute names for other search filters if needed
+    if (searchFilter.highestQualification) {
+      attributeNames["#highestQualification"] = "highestQualification";
+    }
 
     return attributeNames;
   }
@@ -440,11 +446,13 @@ export default class AdminService {
       attributeValues[":profession"] = { S: searchFilter.profession };
     }
 
-    if (searchFilter.universityDegree) {
-      attributeValues[":universityDegree"] = { S: searchFilter.universityDegree };
+    if (searchFilter.universityDegreeSubject) {
+      attributeValues[":universityDegreeSubject"] = { S: searchFilter.universityDegreeSubject };
     }
 
-    // Add more attribute values for other search filters if needed
+    if (searchFilter.highestQualification) {
+      attributeValues[":highestQualification"] = { S: searchFilter.highestQualification };
+    }
 
     return attributeValues;
   }
