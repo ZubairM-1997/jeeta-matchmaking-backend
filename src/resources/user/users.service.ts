@@ -310,7 +310,7 @@ export default class UserService {
     highestQualification: string,
     profession: string,
     photo: Buffer,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
      // Get the existing user profile info by userId
      const userProfileInfo = await this.getUserProfileInfoByUserId(userId);
@@ -336,11 +336,13 @@ export default class UserService {
 
      // Update the user profile info in DynamoDB
      await this.updateUserProfileInfo(userProfileInfo);
+     console.log("User profile info successfully.");
 
      // Update the photo in S3 using the correct userBioId
-     await this.updatePhotoInS3(userProfileInfo.userBioId.S, photo);
+     const url = await this.updatePhotoInS3(userProfileInfo.userBioId, photo);
 
-     console.log("User profile info and photo updated successfully.");
+     return url;
+
       // console.log("User photo updated in S3 successfully.");
     } catch (error) {
       console.error("Error amending application:", error);
@@ -349,6 +351,12 @@ export default class UserService {
   }
 
   async updateUserProfileInfo(userProfileInfo: AWS.DynamoDB.DocumentClient.AttributeMap): Promise<void> {
+
+    console.log({
+      userId: userProfileInfo.userId,
+      userBioId: userProfileInfo.userBioId
+    })
+
     const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: "user_bio_info",
       Key: { userId: userProfileInfo.userId, userBioId: userProfileInfo.userBioId  },
@@ -362,7 +370,7 @@ export default class UserService {
         practicing = :practicing,
         marital_status = :marital_status,
         wantChildren = :wantChildren,
-        hasChildren = :hasChildren
+        hasChildren = :hasChildren,
         universityDegreeSubject = :universityDegreeSubject,
         profession = :profession,
         highestQualification = :highestQualification`,
@@ -376,7 +384,7 @@ export default class UserService {
         ":practicing": userProfileInfo.practicing,
         ":marital_status": userProfileInfo.marital_status,
         ":wantChildren": userProfileInfo.wantChildren,
-        ":hasChilren": userProfileInfo.hasChilren,
+        ":hasChildren": userProfileInfo.hasChildren,
         ":universityDegreeSubject": userProfileInfo.universityDegreeSubject,
         ":profession": userProfileInfo.profession,
         ":highestQualification": userProfileInfo.highestQualification,
@@ -394,7 +402,7 @@ export default class UserService {
   }
 
 
-  async updatePhotoInS3(userBioId: string, photo: Buffer): Promise<void> {
+  async updatePhotoInS3(userBioId: string, photo: Buffer): Promise<string> {
     const photoKey = userBioId; // Change the extension based on the photo type
 
     const previousPhotoParams: AWS.S3.GetObjectRequest = {
@@ -410,25 +418,13 @@ export default class UserService {
         Key: photoKey,
       };
       await this.s3Client.deleteObject(deleteParams).promise();
+      console.log("Previous picture deleted successfully")
     } catch (error) {
         console.error("Error deleting previous photo from S3:", error);
         throw error;
 
     }
 
-    // Upload the new photo to S3
-    const uploadParams: AWS.S3.PutObjectRequest = {
-      Bucket: "user-bio-pics",
-      Key: photoKey,
-      Body: photo,
-    };
-
-    try {
-      await this.s3Client.putObject(uploadParams).promise();
-      console.log("New photo uploaded to S3 successfully.");
-    } catch (error) {
-      console.error("Error uploading new photo to S3:", error);
-      throw error;
-    }
+    return await this.genereateS3Url(userBioId)
   }
 }

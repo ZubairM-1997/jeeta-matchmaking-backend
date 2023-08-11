@@ -306,7 +306,7 @@ export default class UsersController implements Controller {
         photo,
       } = req.body;
 
-      await this.userService.amend(
+      const url = await this.userService.amend(
         userId,
         mobileNumber,
         address,
@@ -326,7 +326,7 @@ export default class UsersController implements Controller {
 
       return res
         .status(200)
-        .json({ message: "Application amended successfully", userProfileInfo });
+        .json({ message: "Application amended successfully", userProfileInfo, s3Link: url});
     } catch (error) {
       console.error("Error amending application:", error);
       return res.status(500).json({ message: "Failed to amend application" });
