@@ -46,10 +46,10 @@ export default class UserService {
     }
 
     const user = {
-      userId: { S: uuidv4() },
-      username: { S: username },
-      email: { S: email },
-      googleSub: { S: sub },
+      userId: uuidv4(),
+      username: username ,
+      email: email ,
+      googleSub: sub ,
     };
 
     const params = {
@@ -59,7 +59,7 @@ export default class UserService {
 
     try {
       // Save the user to DynamoDB
-      await this.dbClient.putItem(params).promise();
+      await this.documentClient.put(params).promise();
       console.log("User created from Google successfully.");
       return user;
     } catch (error) {
@@ -263,7 +263,7 @@ export default class UserService {
       howDidYouLearnAboutUs: {S: howDidYouLearnAboutUs.toLowerCase()},
       universityDegreeSubject: {S: universityDegreeSubject.toLowerCase()},
       highestQualification: {S: highestQualification.toLocaleLowerCase()},
-      annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true }, 
+      annualIncome: annualIncomeStr ? { N: annualIncomeStr } : { NULL: true },
       netWorth: netWorthStr ? { N: netWorthStr } : { NULL: true },
       profession: {S: profession.toLowerCase()},
       approved: { BOOL: false },

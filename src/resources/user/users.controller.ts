@@ -276,6 +276,7 @@ export default class UsersController implements Controller {
 
   amendApplication = async (req: Request, res: Response): Promise<Response> => {
     const { userId } = req.params;
+    console.log(userId);
 
     if (typeof userId !== 'string') {
       return res.status(400).json({ message: "Invalid userId" });
@@ -283,6 +284,7 @@ export default class UsersController implements Controller {
 
     try {
       const userProfileInfo = await this.userService.getSingleUserByUserId(userId);
+      console.log(userProfileInfo)
 
       if (!userProfileInfo) {
         return res.status(404).json({ message: "User not found" });
