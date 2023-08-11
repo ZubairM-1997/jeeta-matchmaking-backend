@@ -286,7 +286,6 @@ export default class UsersController implements Controller {
         return res.status(404).json({ message: "User not found" });
       }
       const {
-        fullName,
         mobileNumber,
         address,
         gender,
@@ -296,17 +295,15 @@ export default class UsersController implements Controller {
         practicing,
         marital_status,
         wantChildren,
+        hasChildren,
         universityDegree,
         profession,
-        howDidYouLearnAboutUs,
-        birthday,
         photo,
       } = req.body;
 
 
       await this.userService.amend(
         userId,
-        fullName,
         mobileNumber,
         address,
         gender,
@@ -316,10 +313,9 @@ export default class UsersController implements Controller {
         practicing,
         marital_status,
         wantChildren,
+        hasChildren,
         universityDegree,
         profession,
-        howDidYouLearnAboutUs,
-        birthday,
         photo,
       );
 

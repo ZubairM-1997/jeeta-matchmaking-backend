@@ -294,7 +294,6 @@ export default class UserService {
 
   async amend(
     userId: string,
-    fullName: string,
     mobileNumber: string,
     fullAddress: string,
     gender: string,
@@ -304,10 +303,9 @@ export default class UserService {
     practicing: string,
     marital_status: string,
     wantChildren: string,
+    hasChildren: string,
     universityDegree: string,
     profession: string,
-    howDidYouLearnAboutUs: string,
-    birthday: string,
     photo: Buffer,
   ): Promise<void> {
     try {
@@ -319,7 +317,7 @@ export default class UserService {
      }
 
      // Update the user profile attributes
-     userProfileInfo.fullName = fullName;
+     userProfileInfo.hasChildren = hasChildren;
      userProfileInfo.mobileNumber = mobileNumber;
      userProfileInfo.address = fullAddress;
      userProfileInfo.gender = gender.toLowerCase();
@@ -331,8 +329,6 @@ export default class UserService {
      userProfileInfo.wantChildren = wantChildren.toLowerCase();
      userProfileInfo.universityDegree = universityDegree.toLowerCase();
      userProfileInfo.profession = profession.toLowerCase()
-     userProfileInfo.howDidYouLearnAboutUs = howDidYouLearnAboutUs.toLowerCase();
-     userProfileInfo.birthday = birthday;
 
      // Update the user profile info in DynamoDB
      await this.updateUserProfileInfo(userProfileInfo);
