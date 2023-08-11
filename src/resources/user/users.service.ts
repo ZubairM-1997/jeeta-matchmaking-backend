@@ -353,7 +353,6 @@ export default class UserService {
       TableName: "user_bio_info",
       Key: { userId: userProfileInfo.userId, userBioId: userProfileInfo.userBioId  },
       UpdateExpression: `SET
-        fullName = :fullName,
         mobileNumber = :mobileNumber,
         address = :address,
         gender = :gender,
@@ -363,12 +362,11 @@ export default class UserService {
         practicing = :practicing,
         marital_status = :marital_status,
         wantChildren = :wantChildren,
-        universityDegree = :universityDegree,
+        hasChildren = :hasChildren
+        universityDegreeSubject = :universityDegreeSubject,
         profession = :profession,
-        howDidYouLearnAboutUs = :howDidYouLearnAboutUs,
-        birthday = :birthday`,
+        highestQualification = :highestQualification`,
       ExpressionAttributeValues: {
-        ":fullName": userProfileInfo.fullName,
         ":mobileNumber": userProfileInfo.mobileNumber,
         ":address": userProfileInfo.address,
         ":gender": userProfileInfo.gender,
@@ -378,10 +376,11 @@ export default class UserService {
         ":practicing": userProfileInfo.practicing,
         ":marital_status": userProfileInfo.marital_status,
         ":wantChildren": userProfileInfo.wantChildren,
-        ":universityDegree": userProfileInfo.universityDegree,
+        ":hasChilren": userProfileInfo.hasChilren,
+        ":universityDegreeSubject": userProfileInfo.universityDegreeSubject,
         ":profession": userProfileInfo.profession,
-        ":howDidYouLearnAboutUs": userProfileInfo.howDidYouLearnAboutUs,
-        ":birthday": userProfileInfo.birthday,
+        ":highestQualification": userProfileInfo.highestQualification,
+
       },
     };
 
