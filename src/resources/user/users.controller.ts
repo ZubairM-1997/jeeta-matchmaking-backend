@@ -136,6 +136,7 @@ export default class UsersController implements Controller {
     req: Request,
     res: Response,
   ): Promise<Response | void> => {
+    console.log('Inside createUser function in user controller');
     const { username, email, password } = req.body;
 
     try {
