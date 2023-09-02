@@ -7,21 +7,12 @@
 	  }
 	],
 	"routes": [
-	  {
-		"src": "/api/user/sign_up",
-		"dest": "dist/index.js",
-		"methods": ["POST"]
-	  },
-	  {
-		"src": "/api/user/sign_in",
-		"dest": "dist/index.js",
-		"methods": ["POST"] 
-	  },
-	  {
-		"src": "/(.*)",
-		"dest": "dist/index.js"
-	  }
-	],
+		{
+		  "src": "/(.*)",
+		  "dest": "dist/index.js",
+		  "methods": ["GET", "POST", "PUT", "DELETE", "OPTION"]
+		}
+	  ],
 	"env": {
 	  "NODE_ENV": "production"
 	}
