@@ -57,11 +57,11 @@ export default class AdminController implements Controller {
   createAdmin = async (req: Request, res: Response): Promise<Response | void> => {
     const { username, password } = req.body;
 
-    const user = await this.adminService.createAdmin(username, password);
+    const adminId = await this.adminService.createAdmin(username, password);
 
-    if (user) {
+    if (adminId) {
       res.status(200).send({
-        user,
+        adminId,
       });
     } else {
       res.status(422).json({
@@ -95,7 +95,7 @@ export default class AdminController implements Controller {
 
       const token = jwt.sign({adminMatch}, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({ token });
+      return res.status(200).json({ jwtToken: token, admin: adminMatch[0] });
     } catch (error) {
       console.error("Error during login:", error);
       return res.status(500).json({ message: "Failed to log in" });

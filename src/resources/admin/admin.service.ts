@@ -151,6 +151,7 @@ export default class AdminService {
     try {
       // Save the user to DynamoDB
       await this.dbClient.putItem(params).promise();
+      return admin.adminId
       console.log("Admin created successfully.");
       return admin;
     } catch (error) {
