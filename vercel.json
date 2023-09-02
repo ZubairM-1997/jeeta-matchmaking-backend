@@ -9,11 +9,13 @@
 	"routes": [
 	  {
 		"src": "/api/user/sign_up",
-		"dest": "dist/index.js"
+		"dest": "dist/index.js",
+		"methods": ["POST"]
 	  },
 	  {
 		"src": "/api/user/sign_in",
-		"dest": "dist/index.js"
+		"dest": "dist/index.js",
+		"methods": ["POST"] 
 	  },
 	  {
 		"src": "/(.*)",
