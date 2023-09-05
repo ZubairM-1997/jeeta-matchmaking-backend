@@ -19,7 +19,9 @@ ADMIN_SECRET_KEY=
 GOOGLE_CLIENT_ID=
 
 You will have to create a JWT secret key for ADMIN_SECRET_KEY and JWT_SECRET_KEY
+
 You will need to create an AWS account to get AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+
 You will need to create a Google Cloud account to get the ID for GOOGLE_CLIENT_ID
 
 4) After you have done that, type 'npm run dev' to run the development server
