@@ -20,19 +20,19 @@ You will need to create a Google Cloud account to get the ID for GOOGLE_CLIENT_I
 
 4) After you have done that, type 'npm run dev' to run the development server
 
-There are 5 Admin endpoints
+There are 6 Admin endpoints
 
-GET /api/admin/:userId
-GET /api/admin/getAllUsers
-POST /api/admin/search
-POST /api/admin/createAdmin
-POST /api/admin/loginAdmin
-PUT /api/admin/:userId/approveApplication
+1) GET /api/admin/:userId
+2) GET /api/admin/getAllUsers
+3) POST /api/admin/search
+4) POST /api/admin/createAdmin
+5) POST /api/admin/loginAdmin
+6) PUT /api/admin/:userId/approveApplication
 
 There are 6 User endpoints
-POST /api/user/sign_up
-POST /api/user/sign_in
-POST /api/user/google/sign_up
-POST /api/user/google/sign_in
-POST /api/user/:userId/createApplication
-PUT /api/user/:userId/amendApplication
+1) POST /api/user/sign_up
+2) POST /api/user/sign_in
+3) POST /api/user/google/sign_up
+4) POST /api/user/google/sign_in
+5) POST /api/user/:userId/createApplication
+6) PUT /api/user/:userId/amendApplication
