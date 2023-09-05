@@ -19,3 +19,20 @@ You will need to create an AWS account to get AWS_ACCESS_KEY_ID and AWS_SECRET_A
 You will need to create a Google Cloud account to get the ID for GOOGLE_CLIENT_ID
 
 4) After you have done that, type 'npm run dev' to run the development server
+
+There are 5 Admin endpoints
+
+GET /api/admin/:userId
+GET /api/admin/getAllUsers
+POST /api/admin/search
+POST /api/admin/createAdmin
+POST /api/admin/loginAdmin
+PUT /api/admin/:userId/approveApplication
+
+There are 6 User endpoints
+POST /api/user/sign_up
+POST /api/user/sign_in
+POST /api/user/google/sign_up
+POST /api/user/google/sign_in
+POST /api/user/:userId/createApplication
+PUT /api/user/:userId/amendApplication
