@@ -26,6 +26,12 @@ You will need to create a Google Cloud account to get the ID for GOOGLE_CLIENT_I
 
 4) After you have done that, type 'npm run dev' to run the development server
 
+On AWS, you need need to create 3 DynamoDB tables, one named "users", the second being "user_bio_info" and the last one named "admins".
+
+on AWS, you will also need to create an S3 bucket named "user_bio_pics"
+
+All this infrastructure should be set up in the "eu-north-1" region on AWS
+
 There are 6 Admin endpoints
 
 1) GET /api/admin/:userId
