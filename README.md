@@ -8,11 +8,15 @@ This is an Express.js backend written in Typescript, utilising AWS (S3 and Dynam
 2) install the dependancies by using 'npm install'
 3) create a .env file in the root of this project with the following
 
-a) AWS_ACCESS_KEY_ID=
-b) AWS_SECRET_ACCESS_KEY=
-c) JWT_SECRET_KEY=
-d) ADMIN_SECRET_KEY=
-e) GOOGLE_CLIENT_ID=
+AWS_ACCESS_KEY_ID=
+
+AWS_SECRET_ACCESS_KEY=
+
+JWT_SECRET_KEY=
+
+ADMIN_SECRET_KEY=
+
+GOOGLE_CLIENT_ID=
 
 You will have to create a JWT secret key for ADMIN_SECRET_KEY and JWT_SECRET_KEY
 You will need to create an AWS account to get AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
