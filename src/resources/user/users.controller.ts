@@ -4,16 +4,29 @@ import UserService from "./users.service";
 import jwt from "jsonwebtoken";
 import { authenticateUserToken } from '../../middleware/middleware';
 import { OAuth2Client } from "google-auth-library";
+import * as nodemailer from 'nodemailer';
+import smtpTransport from 'nodemailer-smtp-transport';
+import { generateResetToken, getResetLink } from '../../helpers/passwordReset';
 
 export default class UsersController implements Controller {
   public path = "/user";
   public router = Router();
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID as string)
   userService;
+  transporter;
 
   constructor(dbClient: AWS.DynamoDB, s3Client: AWS.S3) {
     this.initialiseRoutes();
     this.userService = new UserService(dbClient, s3Client);
+    this.transporter = nodemailer.createTransport(
+      smtpTransport({
+        service: 'gmail',
+        auth: {
+          user: 'enquiries@stratasoftwaresolutions.com',
+          pass: process.env.GMAIL_PASS,
+        },
+      })
+    );
   }
 
   initialiseRoutes(): void {
@@ -34,6 +47,10 @@ export default class UsersController implements Controller {
       authenticateUserToken,
       this.amendApplication,
     );
+
+    this.router.post(`${this.path}/resetPassword/request`, this.requestPasswordReset);
+    this.router.post(`${this.path}/resetPassword/update`, this.updatePassword);
+
   }
 
   signUpWithGoogle = async (
@@ -333,4 +350,66 @@ export default class UsersController implements Controller {
       return res.status(500).json({ message: "Failed to amend application" });
     }
   };
+
+  requestPasswordReset = async (req: Request, res: Response): Promise<Response | void> => {
+    const { email } = req.body;
+
+    try {
+      const user = await this.userService.getSingleUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const userId = user[0].userId as string
+      const resetToken = generateResetToken();
+      const resetTokenExpires = Math.floor(Date.now() / 1000) + 3600
+      const mailOptions = {
+        from: 'enquries@stratasoftwaresolutions.com',
+        to: email,
+        subject: 'Password Reset Request',
+        text: `To reset your password, click the following link: ${getResetLink(resetToken)}`,
+      };
+
+      await this.userService.saveResetToken(userId, resetToken, email, resetTokenExpires)
+      await this.transporter.sendMail(mailOptions);
+
+      // Return a success response
+      return res.status(200).json({ message: "Password reset instructions sent to your email" });
+    } catch (error) {
+      console.error("Error requesting password reset:", error);
+      return res.status(500).json({ message: "Failed to request password reset" });
+    }
+  };
+
+  updatePassword = async (req: Request, res: Response): Promise<Response | void> => {
+    const { token, newPassword, email } = req.body;
+
+    try {
+      // Check if the provided reset token is valid (e.g., not expired and matches a stored token)
+      const user = await this.userService.getSingleUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const userId = user[0].userId as string
+      const isValidToken = await this.userService.validateResetToken(token, email, userId);
+
+      if (!isValidToken) {
+        return res.status(401).json({ message: "Invalid or expired reset token" });
+      }
+
+      const isPasswordUpdated = await this.userService.updatePassword(userId, newPassword, email);
+
+      if (!isPasswordUpdated) {
+        return res.status(500).json({ message: "Failed to update password" });
+      }
+
+      return res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      return res.status(500).json({ message: "Failed to update password" });
+    }
+  };
+
 }

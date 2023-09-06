@@ -1,0 +1,13 @@
+version: '3'
+services:
+  express-app:
+    build:
+      context: .  # The context is the current directory where the Dockerfile is located
+      dockerfile: Dockerfile  # Use the Dockerfile you provided
+    ports:
+      - "4000:4000"  # Map container port 4000 to host port 4000
+    env_file:
+      - .env  # Use the .env file to load environment variables
+    volumes:
+      - ./app:/app  # Mount your app directory into the container (adjust path as needed)
+    command: npm start  # Start your Express app

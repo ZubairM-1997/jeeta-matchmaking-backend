@@ -427,4 +427,78 @@ export default class UserService {
 
     return await this.genereateS3Url(userBioId)
   }
+
+  async saveResetToken(userId: string, resetToken: string, email: string, resetTokenExpires: number) {
+    const params = {
+      TableName: 'users',
+      Key: { userId: userId, email: email },
+      UpdateExpression: 'SET resetToken = :token, resetTokenExpires = :expires',
+      ExpressionAttributeValues: {
+        ':token': resetToken,
+        ':expires': resetTokenExpires,
+      },
+    };
+
+    try {
+      await this.documentClient.update(params).promise();
+      console.log("Reset token and expiration timestamp updated in DynamoDB successfully.");
+    } catch (error) {
+      console.error("Error updating reset token and expiration timestamp", error);
+      throw error;
+    }
+  }
+
+  async updatePassword(userId: string, email: string, newPassword: string): Promise<boolean> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      const params = {
+        TableName: 'users',
+        Key: { userId: userId, email: email },
+        UpdateExpression: 'SET password = :password, resetToken = :removeToken, resetTokenExpires = :removeExpires',
+        ExpressionAttributeValues: {
+          ':password': hashedPassword,
+          ':removeToken': null, // Remove reset token
+          ':removeExpires': null, // Remove reset token expiration timestamp
+        },
+      };
+
+      await this.documentClient.update(params).promise();
+      return true; // Password updated successfully
+    } catch (error) {
+      console.error("Error updating password:", error);
+      throw error;
+    }
+  }
+
+  async validateResetToken(token: string, email: string, userId: string): Promise<boolean> {
+    try {
+      const params = {
+        TableName: 'users',
+        Key: { email: email, userId: userId },
+        ProjectionExpression: 'resetToken, resetTokenExpires',
+      };
+
+      const data = await this.documentClient.get(params).promise();
+      const user = data.Item;
+
+      if (user && user.resetToken && user.resetTokenExpires) {
+        const resetToken = user.resetToken as string;
+        const resetTokenExpires = user.resetTokenExpires as number;
+        const now = Math.floor(Date.now() / 1000); 
+
+        if (resetToken === token && now <= resetTokenExpires) {
+          return true; // Token is valid
+        }
+      }
+
+      return false; // Token is invalid or expired
+    } catch (error) {
+      console.error("Error validating reset token:", error);
+      throw error;
+    }
+  }
+
+
+
 }
