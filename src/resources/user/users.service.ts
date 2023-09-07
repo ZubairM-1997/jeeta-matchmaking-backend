@@ -428,10 +428,10 @@ export default class UserService {
     return await this.genereateS3Url(userBioId)
   }
 
-  async saveResetToken(userId: string, resetToken: string, email: string, resetTokenExpires: number) {
+  async saveResetToken(userId: string, resetToken: string, resetTokenExpires: number) {
     const params = {
       TableName: 'users',
-      Key: { userId: userId, email: email },
+      Key: { userId: userId },
       UpdateExpression: 'SET resetToken = :token, resetTokenExpires = :expires',
       ExpressionAttributeValues: {
         ':token': resetToken,
@@ -448,13 +448,13 @@ export default class UserService {
     }
   }
 
-  async updatePassword(userId: string, email: string, newPassword: string): Promise<boolean> {
+  async updatePassword(userId: string, newPassword: string): Promise<boolean> {
     try {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       const params = {
         TableName: 'users',
-        Key: { userId: userId, email: email },
+        Key: { userId: userId },
         UpdateExpression: 'SET password = :password, resetToken = :removeToken, resetTokenExpires = :removeExpires',
         ExpressionAttributeValues: {
           ':password': hashedPassword,
@@ -485,7 +485,7 @@ export default class UserService {
       if (user && user.resetToken && user.resetTokenExpires) {
         const resetToken = user.resetToken as string;
         const resetTokenExpires = user.resetTokenExpires as number;
-        const now = Math.floor(Date.now() / 1000); 
+        const now = Math.floor(Date.now() / 1000);
 
         if (resetToken === token && now <= resetTokenExpires) {
           return true; // Token is valid

@@ -361,7 +361,7 @@ export default class UsersController implements Controller {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const userId = user[0].userId as string
+      const userId = user[0].userId.S as string
       const resetToken = generateResetToken();
       const resetTokenExpires = Math.floor(Date.now() / 1000) + 3600
       const mailOptions = {
@@ -371,7 +371,7 @@ export default class UsersController implements Controller {
         text: `To reset your password, click the following link: ${getResetLink(resetToken)}`,
       };
 
-      await this.userService.saveResetToken(userId, resetToken, email, resetTokenExpires)
+      await this.userService.saveResetToken(userId, resetToken, resetTokenExpires)
       await this.transporter.sendMail(mailOptions);
 
       // Return a success response
@@ -399,7 +399,7 @@ export default class UsersController implements Controller {
         return res.status(401).json({ message: "Invalid or expired reset token" });
       }
 
-      const isPasswordUpdated = await this.userService.updatePassword(userId, newPassword, email);
+      const isPasswordUpdated = await this.userService.updatePassword(userId, newPassword);
 
       if (!isPasswordUpdated) {
         return res.status(500).json({ message: "Failed to update password" });
