@@ -5,9 +5,9 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN npm install
+RUN npm run build
 
 COPY dist ./dist
-COPY public ./public
 
 EXPOSE 4000
 
