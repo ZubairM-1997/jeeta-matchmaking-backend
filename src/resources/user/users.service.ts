@@ -471,11 +471,11 @@ export default class UserService {
     }
   }
 
-  async validateResetToken(token: string, email: string, userId: string): Promise<boolean> {
+  async validateResetToken(token: string, userId: string): Promise<boolean> {
     try {
       const params = {
         TableName: 'users',
-        Key: { email: email, userId: userId },
+        Key: { userId: userId },
         ProjectionExpression: 'resetToken, resetTokenExpires',
       };
 

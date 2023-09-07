@@ -20,9 +20,15 @@ export default class UsersController implements Controller {
     this.userService = new UserService(dbClient, s3Client);
     this.transporter = nodemailer.createTransport(
       smtpTransport({
-        service: 'gmail',
+        service: "Outlook365",
+         host: "smtp.office365.com",
+        port: 587,
+        tls: {
+          ciphers: "SSLv3",
+          rejectUnauthorized: false,
+        },
         auth: {
-          user: 'enquiries@stratasoftwaresolutions.com',
+          user: 'jettamatchmaking@outlook.com',
           pass: process.env.GMAIL_PASS,
         },
       })
@@ -365,7 +371,7 @@ export default class UsersController implements Controller {
       const resetToken = generateResetToken();
       const resetTokenExpires = Math.floor(Date.now() / 1000) + 3600
       const mailOptions = {
-        from: 'enquries@stratasoftwaresolutions.com',
+        from: 'jettamatchmaking@outlook.com',
         to: email,
         subject: 'Password Reset Request',
         text: `To reset your password, click the following link: ${getResetLink(resetToken)}`,
@@ -392,8 +398,8 @@ export default class UsersController implements Controller {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      const userId = user[0].userId as string
-      const isValidToken = await this.userService.validateResetToken(token, email, userId);
+      const userId = user[0].userId.S as string
+      const isValidToken = await this.userService.validateResetToken(token, userId);
 
       if (!isValidToken) {
         return res.status(401).json({ message: "Invalid or expired reset token" });
