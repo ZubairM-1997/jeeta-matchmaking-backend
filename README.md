@@ -18,7 +18,7 @@ ADMIN_SECRET_KEY=
 
 GOOGLE_CLIENT_ID=
 
-GMAIL_PASS=
+EMAIL_PASS=
 
 
 4) After you have done that, type 'npm run dev' to run the development server
@@ -36,6 +36,9 @@ on AWS, you will also need to create an S3 bucket named "user_bio_pics"
 
 All this infrastructure should be set up in the "eu-north-1" region on AWS
 
+
+If you want to test out the reset and update password functionality, you will need to go into src/user/user.controller.ts,
+and change the email from jettamatchmaking@outlook.com to your own outlook email, and make sure the value of EMAIL_PASS in the environment variables is the password you use to login to that account.
 
 5) Or if you want, you can spin up a docker container using "docker-compose up"
 

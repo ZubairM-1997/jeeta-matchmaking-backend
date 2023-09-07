@@ -29,7 +29,7 @@ export default class UsersController implements Controller {
         },
         auth: {
           user: 'jettamatchmaking@outlook.com',
-          pass: process.env.GMAIL_PASS,
+          pass: process.env.EMAIL_PASS,
         },
       })
     );
