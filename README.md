@@ -18,6 +18,8 @@ ADMIN_SECRET_KEY=
 
 GOOGLE_CLIENT_ID=
 
+GMAIL_PASS=
+
 
 4) After you have done that, type 'npm run dev' to run the development server
 
