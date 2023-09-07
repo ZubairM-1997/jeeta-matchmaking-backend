@@ -55,7 +55,7 @@ export default class UsersController implements Controller {
     );
 
     this.router.post(`${this.path}/resetPassword/request`, this.requestPasswordReset);
-    this.router.post(`${this.path}/resetPassword/update`, this.updatePassword);
+    this.router.put(`${this.path}/resetPassword/update`, this.updatePassword);
 
   }
 

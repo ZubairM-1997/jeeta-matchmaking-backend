@@ -54,4 +54,4 @@ There are 8 User endpoints
 5) POST /api/user/:userId/createApplication
 6) PUT /api/user/:userId/amendApplication
 7) POST /api/user/resetPassword/request
-8) POST /api/user/resetPassword/update
+8) PUT /api/user/resetPassword/update
