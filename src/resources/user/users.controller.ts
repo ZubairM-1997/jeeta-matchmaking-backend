@@ -180,8 +180,8 @@ export default class UsersController implements Controller {
       return res.status(200).json({ jwt: token, userId: createdUser.userId });
 
     } catch(error){
-      console.error("Error during login:", error);
-      return res.status(500).json({ message: "Failed to log in" });
+      console.error("Error during creating user:", error);
+      return res.status(500).json({ message: "Failed to create user" });
     }
   };
 
