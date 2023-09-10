@@ -381,7 +381,12 @@ export default class UsersController implements Controller {
       await this.transporter.sendMail(mailOptions);
 
       // Return a success response
-      return res.status(200).json({ message: "Password reset instructions sent to your email" });
+      return res.status(200).json({
+        message: "Password reset instructions sent to your email" ,
+        url: getResetLink(resetToken),
+        resetToken: resetToken
+      });
+
     } catch (error) {
       console.error("Error requesting password reset:", error);
       return res.status(500).json({ message: "Failed to request password reset" });
