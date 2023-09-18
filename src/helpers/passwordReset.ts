@@ -7,6 +7,6 @@ export const generateResetToken = () => {
 
   // Create a reset link with the reset token
 export const getResetLink = (resetToken: string) => {
-	const resetLink = `https://jetta-matchmaking.com/reset-password?token=${resetToken}`;
+	const resetLink = `https://www.jeetamatchmaking.co.uk/reset-password?token=${resetToken}`;
 	return resetLink;
 };
